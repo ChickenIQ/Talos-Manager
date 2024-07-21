@@ -1,6 +1,6 @@
 - include_tasks: wait_talos.yaml
 
-- name: Make sure etcd to be ready
+- name: Make sure etcd is ready
   ansible.builtin.command: |
     talosctl service etcd status {{ talos_args }}
   register: _etcd

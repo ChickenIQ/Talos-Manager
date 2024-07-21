@@ -10,7 +10,7 @@
   with_items:
     - "patches"
     - "configs"
-    
+
 - name: Generate configs
   run_once: true
   include_tasks: configure.yaml

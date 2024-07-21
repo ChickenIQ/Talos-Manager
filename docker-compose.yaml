@@ -20,5 +20,4 @@ services:
       - ./dev.yaml:/host/config.yaml:ro
       - ~/.talos:/host/.talos
       - ~/.kube:/host/.kube
-      - ./state/configs:/data/configs/
-      - ./state/patches:/data/patches/
+      - ./data:/data/
