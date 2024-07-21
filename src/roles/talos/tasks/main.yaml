@@ -18,11 +18,11 @@
 - name: Apply configs
   include_tasks: apply.yaml
 
-- name: Upgrade node
+- name: Upgrade nodes
   include_tasks: upgrade.yaml
   when: task in ['upgrade', 'upgrade_fast']
 
-- name: Reset node
+- name: Reset nodes
   include_tasks: reset.yaml
   when: task == "reset"
 
@@ -33,5 +33,11 @@
 
 - name: Run post apply tasks
   run_once: true
-  include_tasks: post.yaml
-  when: node_type == 'controlplane'
+  block:
+    - name: Setup Cilium
+      include_tasks: post/cilium.yaml
+      when: cni == "cilium"
+
+    - name: Setup FluxCD
+      include_tasks: post/fluxcd.yaml
+      when: fluxcd.enabled | default(false)

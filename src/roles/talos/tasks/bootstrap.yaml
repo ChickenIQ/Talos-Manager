@@ -1,10 +1,11 @@
-- include_tasks: wait_talos.yaml
+- include_tasks: utils/wait_talos.yaml
 
 - name: Make sure etcd is ready
   ansible.builtin.command: |
     talosctl service etcd status {{ talos_args }}
   register: _etcd
   until: _etcd.rc == 0 and (_etcd.stdout.find('STATE    Preparing') != -1 or _etcd.stdout.find('STATE    Running') != -1)
+  changed_when: false
   retries: 5
   delay: 5
 
@@ -17,7 +18,7 @@
   retries: 5
   delay: 5
 
-- include_tasks: wait_k8s.yaml
+- include_tasks: utils/wait_k8s.yaml
 
 - name: Get kubeconfig
   ansible.builtin.command: |
@@ -42,4 +43,13 @@
   ansible.builtin.copy:
     src: "{{ kubeconfig_host }}"
     dest: "{{ kubeconfig_host }}.bak"
+  when: _kubeconfig_host.stat.exists
+
+- name: Merge kubeconfig
+  ansible.builtin.command: |
+    talosctl kubeconfig {{ talos_args }} {{ kubeconfig_host }} --force --force-context-name {{ cluster_name }}
+  register: _output
+  until: _output.rc == 0
+  retries: 5
+  delay: 5
   when: _kubeconfig_host.stat.exists

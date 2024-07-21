@@ -1,0 +1,45 @@
+- include_tasks: utils/wait_k8s.yaml
+
+- name: Install/Upgrade Cilium
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  ansible.builtin.command: >
+    helm upgrade --install cilium cilium
+      --wait --wait-for-jobs
+      --repo https://helm.cilium.io/
+      --set ipam.mode=kubernetes 
+      --set kubeProxyReplacement=true 
+      --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" 
+      --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" 
+      --set cgroup.autoMount.enabled=false 
+      --set cgroup.hostRoot=/sys/fs/cgroup 
+      --set k8sServiceHost=localhost 
+      --set k8sServicePort=7445
+      --version "{{ cilium.version | default('') }}"
+      {% if cilium.namespace | default('kube-system') != 'kube-system' %}
+      --namespace {{ cilium.namespace }}
+      --create-namespace
+      {% else %}
+      --namespace kube-system
+      {% endif %}
+      {% if cilium.helm_values | default({}) | length > 0 %}
+      --values {{ datastore }}/configs/cilium-values.yaml
+      {% endif %}
+  register: _output
+  until: _output.rc == 0
+  retries: 5
+  delay: 5
+
+# Helm does not wait for the crds to be ready, it will fail a couple of times
+# There's probably a better way to do this
+# PRs are always welcome :)
+- name: Apply networkpolicy
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+    definition: "{{ lookup('file', datastore + '/configs/networkpolicy.yaml') }}"
+  when: cilium.default_policy is defined and cilium.default_policy
+  register: _output
+  until: _output.failed == false
+  retries: 100
+  delay: 5

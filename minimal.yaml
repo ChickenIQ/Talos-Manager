@@ -1,0 +1,51 @@
+cluster:
+  children:
+    controlplane:
+      hosts:
+        192.168.1.100:
+
+  vars:
+    # Task to perform (apply | upgrade | upgrade_fast | reset)
+
+    # All tasks will run apply before running he selected task
+
+    # Apply: apply the configuration to the cluster
+    # This does not guarantee that the cluster is in the desired state
+    # For example, if you set the cni to cillium, then switch to flannel, cilium will remain installed
+
+    # Upgrade: upgrade the cluster to the version specified under talos_version
+    # Upgrades are done one node at a time, this can take a while depending on the number of nodes
+    # This will use the image from the redered config of the node
+    # You use talosctl get mc -n node -o yaml to get the image that will be used
+
+    # Upgrade Fast: same as upgrade but it will upgrade all nodes at the same time, it is not recommended on production systems
+    # WARNING! This can result in data loss, make sure to have up to date backups before running this task
+    # This is considerably faster, but it is also unstable, it guarantees that there will be downtime
+    # Make sure to have up to date backups before running this task
+
+    # Reset: wipe the entire cluster and reapply the configuration
+    # WARNING! This will delete all data from the cluster including everything under /var
+
+    # Kubernetes upgrades are currently not supported in this config
+    # They will be added later
+    task: apply
+
+    # Make sure you change the cluster name to something unique
+    # This will overide the existing context with this name in your talosconfig and kubeconfig
+    cluster_name: minimal
+
+    # IP or FQDN that will be used to reach the kubernetes API
+    # It is recommedned that you use an external load balancer
+    cluster_endpoint: https://{{ groups['controlplane'][0] }}:6443
+
+    # Add additional patches to the selected category (Optional)
+    # You can also define per machine patches by adding vars.patch to the node
+    patches:
+      controlplane:
+        cluster:
+          allowSchedulingOnControlPlanes: true
+
+    # Gzipped,Base64 encoded secrets file
+    # You can generate this variable by running:
+    # docker run ghcr.io/chickeniq/talos-manager gen-secrets
+    secrets: ""

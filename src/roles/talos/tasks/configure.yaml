@@ -1,7 +1,3 @@
-- name: Set Timestamp
-  set_fact:
-    timestamp: "{{ lookup('pipe', 'date +%d-%m-%H:%M:%S') }}"
-
 # The cli version is used instead of the latest available version to prevent unexpected behavior
 - name: Set Talos version
   ansible.builtin.set_fact:
@@ -41,15 +37,9 @@
 - name: Create secrets file
   no_log: true
   ansible.builtin.copy:
-    content: "{{ secrets | b64decode }}"
+    content: "{{ lookup('pipe', 'echo ' + secrets + ' | base64 -d | gunzip') }}"
     dest: "{{ datastore }}/configs/secrets.yaml"
   when: secrets | default('') | length > 0
-
-- name: Generate secrets
-  failed_when: false
-  ansible.builtin.command: |
-    talosctl gen secrets -o {{ datastore }}/configs/secrets.yaml
-  when: secrets is not defined
 
 # Controlplane addresses are added to the tls sans to prevent certificate errors when bootstrapping the cluster
 - name: Add controlplanes to tls sans

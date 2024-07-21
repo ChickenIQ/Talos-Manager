@@ -1,6 +1,6 @@
 docker run -it --rm --network host \
-    -v ~/.talos:/data/.talos \
-    -v ~/.kube:/data/.kube \
-    -v ./config.yaml:/data/config.yaml:ro \
-    -v ~/.ansible/.vault_key:/data/.vault_key:ro \
-    ghcr.io/chickeniq/talos-manager:latest 
+    -v ~/.talos:/host/.talos \
+    -v ~/.kube:/host/.kube \
+    -v ./config.yaml:/host/config.yaml \
+    -v ~/.ansible/.vault_key:/host/.vault_key:ro \
+    ghcr.io/chickeniq/talos-manager:latest

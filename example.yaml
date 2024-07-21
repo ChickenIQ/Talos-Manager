@@ -31,19 +31,18 @@ cluster:
     # Upgrades are done one node at a time, this can take a while depending on the number of nodes
     # This will use the image from the redered config of the node
     # You use talosctl get mc -n node -o yaml to get the image that will be used
-    # Note: If you upgrade a non high availability cluster, data loss is possible
 
     # Upgrade Fast: same as upgrade but it will upgrade all nodes at the same time, it is not recommended on production systems
-    # WARNING! This can result in dataloss, make sure to have up to date backups before running this task
+    # WARNING! This can result in data loss, make sure to have up to date backups before running this task
     # This is considerably faster, but it is also unstable, it guarantees that there will be downtime
     # Make sure to have up to date backups before running this task
 
     # Reset: wipe the entire cluster and reapply the configuration
-    # WARNING! This will delete all data from the cluster including everything under /var/
+    # WARNING! This will delete all data from the cluster including everything under /var
 
     # Kubernetes upgrades are currently not supported in this config
     # They will be added later
-    task: apply # Default: apply
+    task: apply
 
     # Make sure you change the cluster name to something unique
     # This will overide the existing context with this name in your talosconfig and kubeconfig
@@ -69,7 +68,7 @@ cluster:
     k8s_version: 1.30.1
 
     # Add additional patches to the selected category (Optional)
-    # You can also define per machine patches by adding vars.patch to the machine as demonstrated above
+    # You can also define per machine patches by adding vars.patch to the node as demonstrated above
     patches: # (global | controlplane | worker)
       global:
         machine:
@@ -105,8 +104,9 @@ cluster:
           relay:
             enabled: true
 
-    # Base64 encoded secrets file, generated with talosctl gen secrets
-    # If defined, it will be used to generate the config files
+    # Gzipped,Base64 encoded secrets file
+    # You can generate this variable by running:
+    # docker run ghcr.io/chickeniq/talos-manager gen-secrets
     secrets: ""
 
     # Enable FluxCD (Optional)

@@ -1,10 +1,11 @@
-- include_tasks: wait_talos.yaml
+- include_tasks: utils/wait_talos.yaml
 
 - name: Check if node has been initialized
   ansible.builtin.command: |
     talosctl get machinestatus {{ talos_args }} --insecure
   register: node_status
   until: node_status.rc == 0 or node_status.stderr.find("certificate required") != -1
+  changed_when: false
   failed_when: false
   retries: 25
   delay: 5
