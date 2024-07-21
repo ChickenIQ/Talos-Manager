@@ -1,0 +1,24 @@
+name: talos-dev
+
+services:
+  talos-dev:
+    image: ghcr.io/chickeniq/talos-manager:latest
+    container_name: talos-dev
+    network_mode: host
+    stdin_open: true
+    tty: true
+    build: .
+    command:
+      - /usr/bin/ansible-playbook
+      - /src/playbooks/main.yaml
+      - --connection
+      - local
+      - -i
+      - /host/config.yaml
+      - -vv
+    volumes:
+      - ./dev.yaml:/host/config.yaml:ro
+      - ~/.talos:/host/.talos
+      - ~/.kube:/host/.kube
+      - ./state/configs:/data/configs/
+      - ./state/patches:/data/patches/

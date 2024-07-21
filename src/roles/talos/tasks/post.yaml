@@ -1,0 +1,82 @@
+- include_tasks: wait_k8s.yaml
+
+- name: Setup Cilium
+  block:
+    - name: Install/Upgrade Cilium
+      environment:
+        KUBECONFIG: "{{ kubeconfig }}"
+      ansible.builtin.command: >
+        helm upgrade --install cilium cilium
+          --wait --wait-for-jobs
+          --repo https://helm.cilium.io/
+          --namespace cilium --create-namespace
+          --set ipam.mode=kubernetes 
+          --set kubeProxyReplacement=true 
+          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" 
+          --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" 
+          --set cgroup.autoMount.enabled=false 
+          --set cgroup.hostRoot=/sys/fs/cgroup 
+          --set k8sServiceHost=localhost 
+          --set k8sServicePort=7445
+          --version "{{ cilium.version | default('') }}"
+          {% if cilium.helm_values is defined and cilium.helm_values | length > 0 %}
+          --values {{ datastore }}/configs/cilium-values.yaml
+          {% endif %}
+
+    # Helm does not wait for the crds to be ready, it will fail a couple of times
+    # There's probably a better way to do this
+    # PRs are always welcome :)
+    - name: Apply networkpolicy
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig }}"
+        definition: "{{ lookup('file', datastore + '/configs/networkpolicy.yaml') }}"
+      when: cilium.default_policy is defined and cilium.default_policy
+      register: _output
+      until: _output.failed == false
+      retries: 50
+      delay: 2
+  when: cni == "cilium"
+
+- name: Setup FluxCD
+  block:
+    - name: Create flux-system namespace
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig }}"
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: flux-system
+      register: _fluxcd_namespace
+
+    - name: Create SOPS secret
+      no_log: true
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: sops
+            namespace: flux-system
+          data:
+            sops.asc: "{{ fluxcd.sops }}"
+      when: fluxcd.sops is defined and fluxcd.sops != ""
+
+    - name: Install FluxCD
+      environment:
+        KUBECONFIG: "{{ kubeconfig }}"
+        GITHUB_TOKEN: "{{ fluxcd.token }}"
+      ansible.builtin.command: |
+        flux bootstrap github --personal \
+          --owner={{ fluxcd.user }} --repository={{ fluxcd.repo }} \
+          --branch={{ fluxcd.branch }} --path={{ fluxcd.path }}
+      when: _fluxcd_namespace.changed
+      register: _output
+      until: _output.rc == 0
+      retries: 25
+      delay: 5
+  when: fluxcd.enabled is defined and fluxcd.enabled

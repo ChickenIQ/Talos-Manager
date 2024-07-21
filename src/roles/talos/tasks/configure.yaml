@@ -1,0 +1,118 @@
+- name: Set Timestamp
+  set_fact:
+    timestamp: "{{ lookup('pipe', 'date +%d-%m-%H:%M:%S') }}"
+
+# The cli version is used instead of the latest available version to prevent unexpected behavior
+- name: Set Talos version
+  ansible.builtin.set_fact:
+    talos_version: "{{ lookup('pipe', 'talosctl version --client --short').split(' ')[1] }}"
+  when: talos_version is not defined
+
+- name: Create patches files
+  ansible.builtin.copy:
+    content: "{{ patches[item] | to_nice_yaml(2,false) }}"
+    dest: "{{ datastore }}/patches/{{ item }}.yaml"
+  with_items:
+    - global
+    - controlplane
+    - worker
+  when: patches[item] | default({}) | length > 0
+
+- name: Setup cilium
+  block:
+    - name: Create cilium patch
+      ansible.builtin.template:
+        src: cilium.yaml.j2
+        dest: "{{ datastore }}/patches/cilium.yaml"
+
+    - name: Create default network policy (cilium)
+      ansible.builtin.template:
+        src: networkpolicy.yaml.j2
+        dest: "{{ datastore }}/configs/networkpolicy.yaml"
+      when: cilium.default_policy is defined and cilium.default_policy
+
+    - name: Create cilium values file
+      ansible.builtin.copy:
+        content: "{{ cilium.helm_values | to_nice_yaml(2,false) }}"
+        dest: "{{ datastore }}/configs/cilium-values.yaml"
+      when: cilium.helm_values is defined and cilium.helm_values | length > 0
+  when: cni == 'cilium'
+
+- name: Create secrets file
+  no_log: true
+  ansible.builtin.copy:
+    content: "{{ secrets | b64decode }}"
+    dest: "{{ datastore }}/configs/secrets.yaml"
+  when: secrets | default('') | length > 0
+
+- name: Generate secrets
+  failed_when: false
+  ansible.builtin.command: |
+    talosctl gen secrets -o {{ datastore }}/configs/secrets.yaml
+  when: secrets is not defined
+
+# Controlplane addresses are added to the tls sans to prevent certificate errors when bootstrapping the cluster
+- name: Add controlplanes to tls sans
+  ansible.builtin.set_fact:
+    additional_sans: "{{ groups['controlplane'] | map('extract', hostvars, ['inventory_hostname']) | join(',') }}"
+
+- name: Add additional sans
+  ansible.builtin.set_fact:
+    additional_sans: "{{ additional_sans + ',' + tls_sans | join(',') }}"
+  when: tls_sans | default([]) | length > 0
+
+- name: Generate configs
+  ansible.builtin.command: >
+    talosctl gen config {{ cluster_name }} {{ cluster_endpoint }} -o {{ datastore }}/configs/ --with-examples=false --with-docs=false -f
+    --config-patch-control-plane "{{ "@" + datastore + "/patches/cilium.yaml" if cni == 'cilium' }}"
+    --config-patch-control-plane "{{ "@" + datastore + "/patches/controlplane.yaml" if patches.controlplane | default({}) | length > 0 }}"
+    --config-patch-worker "{{ "@" + datastore + "/patches/worker.yaml" if patches.worker | default({}) | length > 0 }}"
+    --config-patch "{{ "@" + datastore + "/patches/global.yaml" if patches.global | default({}) | length > 0 }}"
+    --install-image "{{ talos_image | default('ghcr.io/siderolabs/installer') + ':' + talos_version }}"
+    --kubernetes-version "{{ k8s_version | default('') }}"
+    --with-secrets "{{ datastore }}/configs/secrets.yaml"
+    --additional-sans "{{ additional_sans }}"
+    --talos-version "{{ talos_version }}"
+
+- name: Set config vars
+  ansible.builtin.set_fact:
+    "nodes_{{ item }}": "{{ groups[item] | default('') | map ('extract', hostvars, 'inventory_hostname') | join(' ') }}"
+  with_items:
+    - controlplane
+    - worker
+
+- name: Add endpoints and nodes to talosconfig
+  environment:
+    TALOSCONFIG: "{{ talosconfig }}"
+  ansible.builtin.shell: |
+    talosctl config endpoint {{ nodes_controlplane }}
+    talosctl config node {{ nodes_controlplane }} {{ nodes_worker }}
+
+- name: Check if host talosconfig exists
+  ansible.builtin.stat:
+    path: "{{ talosconfig_host }}"
+  register: _talosconfig_host
+
+- name: Copy talosconfig
+  ansible.builtin.copy:
+    src: "{{ talosconfig }}"
+    dest: "{{ talosconfig_host }}"
+  when: _talosconfig_host.stat.exists == false
+
+- name: Backup talosconfig
+  ansible.builtin.copy:
+    src: "{{ talosconfig_host }}"
+    dest: "{{ talosconfig_host }}.bak"
+  when: _talosconfig_host.stat.exists
+
+# The previous talosconfig is removed to make sure they have the same name
+# The empty context is used to prevent removal errors
+- name: Merge talosconfig
+  ansible.builtin.shell: |
+    talosctl config {{ item }} --talosconfig {{ talosconfig_host }}
+  with_items:
+    - "use-context '' || true"
+    - "remove {{ cluster_name }} -y || true"
+    - "merge {{ talosconfig }}"
+    - "use-context {{ cluster_name }}"
+  when: _talosconfig_host.stat.exists

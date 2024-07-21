@@ -1,0 +1,6 @@
+- include_tasks: wait_talos.yaml
+
+- name: Reset node
+  ansible.builtin.command: |
+    talosctl reset {{ talos_args }} --reboot --graceful=false --system-labels-to-wipe EPHEMERAL
+  no_log: true

@@ -1,0 +1,18 @@
+- include_tasks: wait_talos.yaml
+
+- name: Get image
+  ansible.builtin.command: >
+    talosctl get machineconfig {{ talos_args }} -o yaml
+  register: _image
+  until: _image.rc == 0
+  retries: 50
+  delay: 5
+
+- name: Upgrade node
+  ansible.builtin.command: >
+    talosctl upgrade {{ talos_args }} --force --preserve --image={{ (_image.stdout | from_yaml).spec.machine.install.image }}
+  register: _output
+  until: _output.rc == 0
+  throttle: "{{ 0 if task == 'upgrade_fast' else 1 }}"
+  retries: 50
+  delay: 5

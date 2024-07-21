@@ -1,0 +1,5 @@
+- name: Talos
+  hosts: cluster
+  any_errors_fatal: true
+  roles:
+    - talos

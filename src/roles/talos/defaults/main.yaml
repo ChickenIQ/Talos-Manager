@@ -1,0 +1,17 @@
+
+task: apply
+cni: flannel
+cluster_name: default
+cluster_endpoint: https://{{ groups['controlplane'][0] }}:6443
+
+datastore: "/data"
+talosconfig: "{{ datastore }}/configs/talosconfig"
+kubeconfig: "{{ datastore }}/configs/kubeconfig"
+
+data_host: "/host"
+talosconfig_host: "{{ data_host }}/.talos/config"
+kubeconfig_host: "{{ data_host }}/.kube/config"
+inventory_file: "{{ data_host }}/config.yaml"
+
+ansible_connection: "local"
+talos_args: "-n {{ inventory_hostname }} -e {{ inventory_hostname }} --talosconfig {{ talosconfig }}"

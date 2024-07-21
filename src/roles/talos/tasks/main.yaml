@@ -1,0 +1,37 @@
+- name: Set node type
+  ansible.builtin.set_fact:
+    node_type: "{{ 'controlplane' if 'controlplane' in group_names else 'worker' }}"
+
+- name: Ensure the required directories are created
+  run_once: true
+  ansible.builtin.file:
+    path: "{{ datastore }}/{{ item }}"
+    state: directory
+  with_items:
+    - "patches"
+    - "configs"
+    
+- name: Generate configs
+  run_once: true
+  include_tasks: configure.yaml
+
+- name: Apply configs
+  include_tasks: apply.yaml
+
+- name: Upgrade node
+  include_tasks: upgrade.yaml
+  when: task in ['upgrade', 'upgrade_fast']
+
+- name: Reset node
+  include_tasks: reset.yaml
+  when: task == "reset"
+
+- name: Bootstrap cluster
+  run_once: true
+  include_tasks: bootstrap.yaml
+  when: node_type == 'controlplane'
+
+- name: Run post apply tasks
+  run_once: true
+  include_tasks: post.yaml
+  when: node_type == 'controlplane'

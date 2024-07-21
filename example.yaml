@@ -1,0 +1,118 @@
+# An example configuration file for Talos-Manager
+# Remember, this is just an Ansible inventory file
+# You can even use jinja2 templating in this file
+cluster:
+  children:
+    controlplane:
+      hosts:
+        192.168.1.100:
+          patch:
+            machine:
+              network:
+                hostname: a
+
+    worker:
+      hosts:
+        192.168.1.200:
+          patch:
+            machine:
+              network:
+                hostname: b
+  vars:
+    # Task to perform (apply | upgrade | upgrade_fast | reset) # Default: apply
+
+    # All tasks will run apply before running he selected task
+
+    # Apply: apply the configuration to the cluster
+    # This does not guarantee that the cluster is in the desired state
+    # For example, if you set the cni to cillium, then switch to flannel, cilium will remain installed
+
+    # Upgrade: upgrade the cluster to the version specified under talos_version
+    # Upgrades are done one node at a time, this can take a while depending on the number of nodes
+    # This will use the image from the redered config of the node
+    # You use talosctl get mc -n node -o yaml to get the image that will be used
+
+    # Upgrade Fast: same as upgrade but it will upgrade all nodes at the same time, it is not recommended on production systems
+    # WARNING! This can result in dataloss, make sure to have up to date backups before running this task
+    # This is considerably faster, but it is also unstable, it guarantees that there will be downtime
+    # Make sure to have up to date backups before running this task
+
+    # Reset: wipe the entire cluster and reapply the configuration
+    # WARNING! This will delete all data from the cluster including everything under /var/
+
+    # Kubernetes upgrades are currently not supported in this config
+    # They will be added later
+    task: apply
+
+    # Make sure you change the cluster name to something unique
+    # This will overide the existing context with this name in your talosconfig and kubeconfig
+    cluster_name: example
+
+    # IP or FQDN that will be used to reach the kubernetes API
+    # It is recommedned that you use an external load balancer
+    cluster_endpoint: https://{{ groups['controlplane'][0] }}:6443
+
+    # The network plugin to use (flannel | cilium)
+    cni: flannel
+
+    # Add additional SANs to the TLS certificate (Optional)
+    # Controlplane IPs are automatically added
+    # tls_sans:
+    #   - kubernetes.example.com
+
+    # Set the Talos/Kubernetes version to install (Optional)
+    # Patches override these values if their respective fields are set
+    # Upgrades are not automatic, you need to run the upgrade task to upgrade the cluster
+    talos_image: ghcr.io/siderolabs/installer
+    talos_version: v1.7.5
+    k8s_version: 1.30.1
+
+    # Add additional patches to the selected category (Optional)
+    # You can also define per machine patches by adding vars.patch to the machine as demonstrated above
+    patches: # (global | controlplane | worker)
+      global:
+        machine:
+          features:
+            hostDNS:
+              forwardKubeDNSToHost: true
+
+      controlplane:
+        cluster:
+          allowSchedulingOnControlPlanes: true
+
+      worker: {}
+
+    cilium:
+      # Cilium version to install (Optional)
+      version: 1.15.7
+
+      # Enable the default network policy
+      # This will block traffic between pods except coredns, but allow traffic to the internet
+      # The kube-system cilium namespaces are excluded from the policy
+      default_policy: true
+
+      # Add additional values to the cilium helm chart (Optional)
+      helm_values:
+        operator:
+          replicas: 1
+        hubble:
+          ui:
+            enabled: true
+          relay:
+            enabled: true
+
+    # Base64 encoded secrets file, generated with talosctl gen secrets
+    # If defined, it will be used to generate the config files
+    secrets: ""
+
+    # Enable FluxCD (Optional)
+    # Only github repositories are currently supported
+    fluxcd:
+      enabled: false
+      branch: main
+      user: User
+      repo: GitOps
+      path: clusters/example # Path to the FluxCD configuration
+      token: "" # GitHub PAT (Required permissions: Administration: RW, Contents: RW, Metadata: RO)
+      sops: "" # Base64 encoded SOPS private key (Optional)
+
