@@ -2,7 +2,7 @@
   ansible.builtin.set_fact:
     node_type: "{{ 'controlplane' if 'controlplane' in group_names else 'worker' }}"
 
-- name: Ensure the required directories are created
+- name: Ensure the required directories are present
   run_once: true
   ansible.builtin.file:
     path: "{{ datastore }}/{{ item }}"

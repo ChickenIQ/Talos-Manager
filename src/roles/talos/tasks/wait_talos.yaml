@@ -1,8 +1,7 @@
-# Prevent errors when the Talos API is not available
 - name: Make sure the Talos API is available
   wait_for:
     host: "{{ inventory_hostname }}"
     port: 50000
-    delay: 2
+    sleep: 2
     timeout: 300
     state: started

@@ -5,7 +5,7 @@
     talosctl service etcd status {{ talos_args }}
   register: _etcd
   until: _etcd.rc == 0 and (_etcd.stdout.find('STATE    Preparing') != -1 or _etcd.stdout.find('STATE    Running') != -1)
-  retries: 25
+  retries: 5
   delay: 5
 
 - name: Bootstrap cluster
@@ -14,7 +14,7 @@
   when: _etcd.stdout.find('STATE    Running') == -1
   until: _output.rc == 0
   register: _output
-  retries: 25
+  retries: 5
   delay: 5
 
 - include_tasks: wait_k8s.yaml
@@ -24,7 +24,7 @@
     talosctl kubeconfig {{ talos_args }} {{ datastore }}/configs/kubeconfig --merge=false --force --force-context-name {{ cluster_name }}
   register: _output
   until: _output.rc == 0
-  retries: 50
+  retries: 5
   delay: 5
 
 - name: Check if host kubeconfig exists

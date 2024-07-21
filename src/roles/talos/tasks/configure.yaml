@@ -105,14 +105,14 @@
     dest: "{{ talosconfig_host }}.bak"
   when: _talosconfig_host.stat.exists
 
-# The previous talosconfig is removed to make sure they have the same name
-# The empty context is used to prevent removal errors
+# The previous talosconfig is removed to make sure the new one is merged correctly
+# An empty context is created to prevent issues when removing the previous context
 - name: Merge talosconfig
+  environment:
+    TALOSCONFIG: "{{ talosconfig_host }}"
   ansible.builtin.shell: |
-    talosctl config {{ item }} --talosconfig {{ talosconfig_host }}
-  with_items:
-    - "use-context '' || true"
-    - "remove {{ cluster_name }} -y || true"
-    - "merge {{ talosconfig }}"
-    - "use-context {{ cluster_name }}"
+    talosctl config use-context '' || true
+    talosctl config remove {{ cluster_name }} -y || true
+    talosctl config merge {{ talosconfig }}
+    talosctl config use-context {{ cluster_name }}
   when: _talosconfig_host.stat.exists

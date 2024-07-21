@@ -9,7 +9,6 @@
         helm upgrade --install cilium cilium
           --wait --wait-for-jobs
           --repo https://helm.cilium.io/
-          --namespace cilium --create-namespace
           --set ipam.mode=kubernetes 
           --set kubeProxyReplacement=true 
           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" 
@@ -19,9 +18,19 @@
           --set k8sServiceHost=localhost 
           --set k8sServicePort=7445
           --version "{{ cilium.version | default('') }}"
-          {% if cilium.helm_values is defined and cilium.helm_values | length > 0 %}
+          {% if cilium.namespace | default('kube-system') != 'kube-system' %}
+          --namespace {{ cilium.namespace }}
+          --create-namespace
+          {% else %}
+          --namespace kube-system
+          {% endif %}
+          {% if cilium.helm_values | default({}) | length > 0 %}
           --values {{ datastore }}/configs/cilium-values.yaml
           {% endif %}
+      register: _output
+      until: _output.rc == 0
+      retries: 5
+      delay: 5
 
     # Helm does not wait for the crds to be ready, it will fail a couple of times
     # There's probably a better way to do this
@@ -34,8 +43,8 @@
       when: cilium.default_policy is defined and cilium.default_policy
       register: _output
       until: _output.failed == false
-      retries: 50
-      delay: 2
+      retries: 25
+      delay: 5
   when: cni == "cilium"
 
 - name: Setup FluxCD
@@ -77,6 +86,6 @@
       when: _fluxcd_namespace.changed
       register: _output
       until: _output.rc == 0
-      retries: 25
+      retries: 5
       delay: 5
   when: fluxcd.enabled is defined and fluxcd.enabled

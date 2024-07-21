@@ -19,7 +19,7 @@ cluster:
               network:
                 hostname: b
   vars:
-    # Task to perform (apply | upgrade | upgrade_fast | reset) # Default: apply
+    # Task to perform (apply | upgrade | upgrade_fast | reset)
 
     # All tasks will run apply before running he selected task
 
@@ -31,6 +31,7 @@ cluster:
     # Upgrades are done one node at a time, this can take a while depending on the number of nodes
     # This will use the image from the redered config of the node
     # You use talosctl get mc -n node -o yaml to get the image that will be used
+    # Note: If you upgrade a non high availability cluster, data loss is possible
 
     # Upgrade Fast: same as upgrade but it will upgrade all nodes at the same time, it is not recommended on production systems
     # WARNING! This can result in dataloss, make sure to have up to date backups before running this task
@@ -42,7 +43,7 @@ cluster:
 
     # Kubernetes upgrades are currently not supported in this config
     # They will be added later
-    task: apply
+    task: apply # Default: apply
 
     # Make sure you change the cluster name to something unique
     # This will overide the existing context with this name in your talosconfig and kubeconfig
@@ -86,9 +87,12 @@ cluster:
       # Cilium version to install (Optional)
       version: 1.15.7
 
+      # Namespace to install cilium to (Optional)
+      namespace: kube-system
+
       # Enable the default network policy
       # This will block traffic between pods except coredns, but allow traffic to the internet
-      # The kube-system cilium namespaces are excluded from the policy
+      # kube-system and the specified cilium namespace are excluded from the policy
       default_policy: true
 
       # Add additional values to the cilium helm chart (Optional)

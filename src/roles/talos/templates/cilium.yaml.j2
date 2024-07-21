@@ -4,10 +4,12 @@ cluster:
       name: none
   proxy:
     disabled: true
+{% if cilium.namespace | default('kube-system') != 'kube-system' %}
   apiServer:
     admissionControl:
       - name: PodSecurity
         configuration:
           exemptions:
             namespaces:
-              - cilium
+              - {{ cilium.namespace }}
+{% endif %}
