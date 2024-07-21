@@ -1,4 +1,4 @@
-- name: Make sure the Talos API is available
+- name: Wait for the Talos API to be available
   wait_for:
     host: "{{ inventory_hostname }}"
     port: 50000
