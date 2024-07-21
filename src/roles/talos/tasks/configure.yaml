@@ -95,8 +95,8 @@
     dest: "{{ talosconfig_host }}.bak"
   when: _talosconfig_host.stat.exists
 
+# An empty context is used to prevent issues when removing the previous context
 # The previous talosconfig is removed to make sure the new one is merged correctly
-# An empty context is created to prevent issues when removing the previous context
 - name: Merge talosconfig
   environment:
     TALOSCONFIG: "{{ talosconfig_host }}"
