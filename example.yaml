@@ -45,31 +45,30 @@ cluster:
     task: apply
 
     # Make sure you change the cluster name to something unique
-    # This will overide the existing context with this name in your talosconfig and kubeconfig
+    # WARNING! This will overwrite the existing context with this name in your talosconfig and kubeconfig
     cluster_name: example
 
     # IP or FQDN that will be used to reach the kubernetes API
-    # It is recommedned that you use an external load balancer
     cluster_endpoint: https://{{ groups['controlplane'][0] }}:6443
 
     # The network plugin to use (flannel | cilium)
     cni: flannel
 
-    # Add additional SANs to the TLS certificate (Optional)
+    # Add additional SANs to the TLS certificate
     # Controlplane IPs are automatically added
     # tls_sans:
     #   - kubernetes.example.com
 
-    # Set the Talos/Kubernetes version to install (Optional)
+    # Set the Talos/Kubernetes version to install
     # Patches override these values if their respective fields are set
     # Upgrades are not automatic, you need to run the upgrade task to upgrade the cluster
-    talos_image: ghcr.io/siderolabs/installer
-    talos_version: v1.7.5
-    k8s_version: 1.30.1
+    talos_image: ghcr.io/siderolabs/installer # (Optional)
+    talos_version: v1.7.5 # (Optional)
+    k8s_version: 1.30.1 # (Optional)
 
     # Add additional patches to the selected category (Optional)
     # You can also define per machine patches by adding vars.patch to the node as demonstrated above
-    patches: # (global | controlplane | worker)
+    patches: # (global | controlplane | worker) (Optional)
       global:
         machine:
           features:
@@ -80,29 +79,24 @@ cluster:
         cluster:
           allowSchedulingOnControlPlanes: true
 
-      worker: {}
+      # worker: {}
 
     cilium:
-      # Cilium version to install (Optional)
-      version: 1.15.7
+      # Cilium version to install
+      version: 1.15.7 # Optional
 
-      # Namespace to install cilium to (Optional)
-      namespace: kube-system
+      # Namespace to install cilium to
+      namespace: kube-system # Optional
 
       # Enable the default network policy
       # This will block traffic between pods except coredns, but allow traffic to the internet
       # kube-system and the specified cilium namespace are excluded from the policy
-      default_policy: true
+      default_policy: true # Optional
 
-      # Add additional values to the cilium helm chart (Optional)
-      helm_values:
+      # Add additional values to the cilium helm chart
+      helm_values: # Optional
         operator:
           replicas: 1
-        hubble:
-          ui:
-            enabled: true
-          relay:
-            enabled: true
 
     # Gzipped,Base64 encoded secrets file
     # You can generate this variable by running:

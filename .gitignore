@@ -1,3 +1,4 @@
-config.yaml
-dev.yaml
+personal/
 data/
+dev/
+config.yaml
