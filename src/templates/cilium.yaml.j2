@@ -4,7 +4,7 @@ cluster:
       name: none
   proxy:
     disabled: true
-{% if cilium.default_policy | default(false) %}
+{% if cilium.use_default_policy | default(false) %}
 machine:
   files:
     - content: |

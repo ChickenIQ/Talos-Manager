@@ -35,7 +35,7 @@
       --set k8sServicePort=7445
       --version "{{ cilium.version | default('') }}"
       --namespace {{ cilium.namespace | default('kube-system') }}
-      {% if cilium.default_policy | default(false) %}
+      {% if cilium.use_default_policy | default(false) %}
       --set extraArgs[0]=--static-cnp-path=/policies
       --set extraHostPathMounts[0].name=static-policies
       --set extraHostPathMounts[0].mountPath=/policies
