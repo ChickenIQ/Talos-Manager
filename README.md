@@ -76,7 +76,9 @@ docker run -it --rm `
     ghcr.io/chickeniq/talos-manager
 ```
 
-6. Optionally, encrypt your config file:
+## Encryption
+
+Talos-Manager supports encryption and decryption of the config file using ansible-vault. It is highly recommended to encrypt your config file as it will contain important secrets and information about your cluster.
 
 You will have to mount the key file to the container for this to work. Make sure to use a strong and complicated key and keep it safe.
 
