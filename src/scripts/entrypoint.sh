@@ -1,9 +1,10 @@
 #!/bin/sh
+set -e
 
-export ANSIBLE_ARGS="/src/playbooks/main.yaml --connection local -i /host/config.yaml"
+export ANSIBLE_ARGS="/src/main.yaml --connection local -i /host/config.yaml"
 export VAULT_FILE="/host/.vault_key"
 
-if [ -f /host/.vault_key ]; then
+if [ -f $VAULT_FILE ]; then
   export ANSIBLE_ARGS="$ANSIBLE_ARGS --vault-password-file $VAULT_FILE"
   export KEY_EXISTS=true
 fi
@@ -17,9 +18,20 @@ vault_action() {
     # Avoid ansible bug when encrypting/decrypting a file in place
     CONTENT=$(ansible-vault $1 /host/config.yaml --vault-password-file $VAULT_FILE --output -) && 
     echo "$CONTENT" > /host/config.yaml
+    echo "File $1ed successfully."
   else
     echo "Vault key not found."
   fi
+}
+
+show_commands() {
+  echo "Available commands:"
+  echo "sh:           Start a shell"
+  echo "start:        Execute normally"
+  echo "debug:        Execute in debug mode"
+  echo "encrypt:      Encrypt the config file"
+  echo "decrypt:      Decrypt the config file"
+  echo "gen-secrets:  Generate secrets for the config file"
 }
 
 case "$1" in
@@ -47,12 +59,6 @@ case "$1" in
   *)
     echo "Unknown command!"
     echo ""
-    echo "Available commands:"
-    echo "sh:           Start a shell"
-    echo "start:        Execute normally"
-    echo "debug:        Execute in debug mode"
-    echo "encrypt:      Encrypt the config file"
-    echo "decrypt:      Decrypt the config file"
-    echo "gen-secrets:  Generate secrets for the config file"
+    show_commands
     ;;
 esac

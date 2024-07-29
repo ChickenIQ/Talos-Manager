@@ -1,0 +1,20 @@
+- include_tasks: utils/wait_talos.yaml
+
+- name: Display reset countdown
+  run_once: true
+  vars:
+    countdown: 10
+  ansible.builtin.debug:
+    msg:
+      [
+        "WARNING!",
+        "Resetting cluster in {{ item }} seconds...",
+        "Press Ctrl+C to cancel.",
+      ]
+  loop: "{{ range(countdown, 0, -1) | list }}"
+  loop_control:
+    pause: 1
+
+- name: Reset nodes
+  ansible.builtin.command: >
+    talosctl reset {{ talos_args }} --reboot --graceful=false --system-labels-to-wipe EPHEMERAL

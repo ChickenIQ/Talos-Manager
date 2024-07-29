@@ -1,0 +1,53 @@
+- name: Talos
+  hosts: cluster
+  any_errors_fatal: true
+  vars:
+    datastore: "/data"
+    talosconfig: "{{ datastore }}/configs/talosconfig"
+    kubeconfig: "{{ datastore }}/configs/kubeconfig"
+
+    data_host: "/host"
+    talosconfig_host: "{{ data_host }}/.talos/config"
+    kubeconfig_host: "{{ data_host }}/.kube/config"
+
+    talos_args: "-n {{ inventory_hostname }} -e {{ inventory_hostname }} --talosconfig {{ talosconfig }}"
+  pre_tasks:
+    - name: Ensure the required directories are present
+      run_once: true
+      ansible.builtin.file:
+        path: "{{ datastore }}/{{ item }}"
+        state: directory
+      with_items:
+        - "patches"
+        - "configs"
+
+    - name: Set node type
+      ansible.builtin.set_fact:
+        node_type: "{{ 'controlplane' if 'controlplane' in group_names else 'worker' }}"
+  tasks:
+    - name: Generate configs
+      run_once: true
+      include_tasks: tasks/configure.yaml
+
+    - name: Apply configs
+      include_tasks: tasks/apply.yaml
+
+    - name: Reset nodes
+      include_tasks: tasks/reset.yaml
+      when: task == "reset"
+
+    - name: Bootstrap cluster
+      run_once: true
+      include_tasks: tasks/bootstrap.yaml
+      when: node_type == 'controlplane'
+
+    - name: Run post apply tasks
+      run_once: true
+      block:
+        - name: Setup Cilium
+          include_tasks: tasks/post/cilium.yaml
+          when: cni | default('flannel') == "cilium"
+
+        - name: Setup FluxCD
+          include_tasks: tasks/post/fluxcd.yaml
+          when: fluxcd.enabled | default(false)

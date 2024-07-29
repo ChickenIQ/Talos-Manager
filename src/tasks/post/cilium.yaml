@@ -1,0 +1,51 @@
+- include_tasks: tasks/utils/wait_k8s.yaml
+
+- name: Create cilium namespace
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ cilium.namespace }}"
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/enforce-version: latest
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/audit-version: latest
+          pod-security.kubernetes.io/warn: privileged
+          pod-security.kubernetes.io/warn-version: latest
+  when: cilium.namespace | default('kube-system') != 'kube-system'
+
+- name: Install/Upgrade Cilium
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  ansible.builtin.command: >
+    helm upgrade --install cilium cilium
+      --wait --wait-for-jobs
+      --repo https://helm.cilium.io/
+      --set ipam.mode=kubernetes 
+      --set kubeProxyReplacement=true 
+      --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" 
+      --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" 
+      --set cgroup.autoMount.enabled=false 
+      --set cgroup.hostRoot=/sys/fs/cgroup 
+      --set k8sServiceHost=localhost 
+      --set k8sServicePort=7445
+      --version "{{ cilium.version | default('') }}"
+      --namespace {{ cilium.namespace | default('kube-system') }}
+      {% if cilium.default_policy | default(false) %}
+      --set extraArgs[0]=--static-cnp-path=/policies
+      --set extraHostPathMounts[0].name=static-policies
+      --set extraHostPathMounts[0].mountPath=/policies
+      --set extraHostPathMounts[0].hostPath=/var/lib/networkpolicies/
+      --set extraHostPathMounts[0].hostPathType=DirectoryOrCreate
+      {% endif %}
+      {% if cilium.helm_values | default({}) | length > 0 %}
+      --values {{ datastore }}/configs/cilium-values.yaml
+      {% endif %}
+  register: _output
+  until: _output.rc == 0
+  retries: 5
+  delay: 5

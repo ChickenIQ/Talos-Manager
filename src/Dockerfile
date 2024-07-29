@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk add --no-cache ansible curl py3-kubernetes helm
+RUN apk add --no-cache ansible curl py3-kubernetes helm yq
 
 RUN ansible-galaxy collection install kubernetes.core
 
@@ -20,8 +20,8 @@ COPY . /src
 
 WORKDIR /src
 
-RUN chmod +x /src/entrypoint.sh
+RUN chmod +x /src/scripts/*
 
 USER alpine
 
-ENTRYPOINT [ "/src/entrypoint.sh" ]
+ENTRYPOINT [ "/src/scripts/entrypoint.sh" ]

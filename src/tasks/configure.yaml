@@ -21,18 +21,12 @@
         src: cilium.yaml.j2
         dest: "{{ datastore }}/patches/cilium.yaml"
 
-    - name: Create default network policy (cilium)
-      ansible.builtin.template:
-        src: networkpolicy.yaml.j2
-        dest: "{{ datastore }}/configs/networkpolicy.yaml"
-      when: cilium.default_policy is defined and cilium.default_policy
-
     - name: Create cilium values file
       ansible.builtin.copy:
         content: "{{ cilium.helm_values | to_nice_yaml(2,false) }}"
         dest: "{{ datastore }}/configs/cilium-values.yaml"
       when: cilium.helm_values is defined and cilium.helm_values | length > 0
-  when: cni == 'cilium'
+  when: cni | default('flannel') == 'cilium'
 
 - name: Create secrets file
   no_log: true
@@ -54,7 +48,7 @@
 - name: Generate configs
   ansible.builtin.command: >
     talosctl gen config {{ cluster_name }} {{ cluster_endpoint }} -o {{ datastore }}/configs/ --with-examples=false --with-docs=false -f
-    --config-patch-control-plane "{{ "@" + datastore + "/patches/cilium.yaml" if cni == 'cilium' }}"
+    --config-patch-control-plane "{{ "@" + datastore + "/patches/cilium.yaml" if cni | default('flannel') == 'cilium' }}"
     --config-patch-control-plane "{{ "@" + datastore + "/patches/controlplane.yaml" if patches.controlplane | default({}) | length > 0 }}"
     --config-patch-worker "{{ "@" + datastore + "/patches/worker.yaml" if patches.worker | default({}) | length > 0 }}"
     --config-patch "{{ "@" + datastore + "/patches/global.yaml" if patches.global | default({}) | length > 0 }}"

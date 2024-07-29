@@ -1,6 +1,6 @@
-- include_tasks: utils/wait_k8s.yaml
+- include_tasks: tasks/utils/wait_k8s.yaml
 
-- name: Create flux-system namespace
+- name: Create fluxcd namespace
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ kubeconfig }}"
@@ -25,16 +25,17 @@
       stringData:
         sops.asc: "{{ lookup('pipe', 'echo ' + fluxcd.sops + ' | base64 -d | gunzip') }}"
   when: fluxcd.sops | default('') != ""
+  register: _sops_secret
 
 - name: Install FluxCD
   environment:
     KUBECONFIG: "{{ kubeconfig }}"
     GITHUB_TOKEN: "{{ fluxcd.token }}"
-  ansible.builtin.command: |
-    flux bootstrap github --personal \
-      --owner={{ fluxcd.user }} --repository={{ fluxcd.repo }} \
+  ansible.builtin.command: >
+    flux bootstrap github --personal
+      --owner={{ fluxcd.user }} --repository={{ fluxcd.repo }}
       --branch={{ fluxcd.branch }} --path={{ fluxcd.path }}
-  when: _fluxcd_namespace.changed
+  when: _fluxcd_namespace.changed or _sops_secret.changed or fluxcd.update | default(false)
   register: _output
   until: _output.rc == 0
   retries: 5

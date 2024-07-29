@@ -19,7 +19,7 @@ cluster:
               network:
                 hostname: b
   vars:
-    # Task to perform (apply | upgrade | upgrade_fast | reset)
+    # Task to perform (apply | reset)
 
     # All tasks will run apply before running he selected task
 
@@ -27,21 +27,8 @@ cluster:
     # This does not guarantee that the cluster is in the desired state
     # For example, if you set the cni to cillium, then switch to flannel, cilium will remain installed
 
-    # Upgrade: upgrade the cluster to the version specified under talos_version
-    # Upgrades are done one node at a time, this can take a while depending on the number of nodes
-    # This will use the image from the redered config of the node
-    # You use talosctl get mc -n node -o yaml to get the image that will be used
-
-    # Upgrade Fast: same as upgrade but it will upgrade all nodes at the same time, it is not recommended on production systems
-    # WARNING! This can result in data loss, make sure to have up to date backups before running this task
-    # This is considerably faster, but it is also unstable, it guarantees that there will be downtime
-    # Make sure to have up to date backups before running this task
-
     # Reset: wipe the entire cluster and reapply the configuration
     # WARNING! This will delete all data from the cluster including everything under /var
-
-    # Kubernetes upgrades are currently not supported in this config
-    # They will be added later
     task: apply
 
     # Make sure you change the cluster name to something unique
@@ -51,8 +38,8 @@ cluster:
     # IP or FQDN that will be used to reach the kubernetes API
     cluster_endpoint: https://{{ groups['controlplane'][0] }}:6443
 
-    # The network plugin to use (flannel | cilium)
-    cni: flannel
+    # The network plugin to use (cilium | flannel)
+    cni: cilium
 
     # Add additional SANs to the TLS certificate
     # Controlplane IPs are automatically added
@@ -61,7 +48,7 @@ cluster:
 
     # Set the Talos/Kubernetes version to install
     # Patches override these values if their respective fields are set
-    # Upgrades are not automatic, you need to run the upgrade task to upgrade the cluster
+    # Upgrades are automatic, if an image/version change is detected
     talos_image: ghcr.io/siderolabs/installer # (Optional)
     talos_version: v1.7.5 # (Optional)
     k8s_version: 1.30.1 # (Optional)
@@ -83,20 +70,25 @@ cluster:
 
     cilium:
       # Cilium version to install
-      version: 1.15.7 # Optional
+      version: 1.16.0 # Optional
 
       # Namespace to install cilium to
       namespace: kube-system # Optional
 
       # Enable the default network policy
       # This will block traffic between pods except coredns, but allow traffic to the internet
-      # kube-system and the specified cilium namespace are excluded from the policy
-      default_policy: true # Optional
+      # kube-system and the specified cilium namespace are considered privileged namespaces,
+      # all pods in these namespaces have no restrictions
+      default_policy: false # Optional
 
       # Add additional values to the cilium helm chart
       helm_values: # Optional
         operator:
           replicas: 1
+        # A simple load balancer similar to k3s's ServiceLB
+        # To use this feature, you must set the loadBalancerClass to "io.cilium/node"
+        nodeIPAM:
+          enabled: true
 
     # Gzipped,Base64 encoded secrets file
     # You can generate this variable by running:
@@ -107,6 +99,7 @@ cluster:
     # Only github repositories are currently supported
     fluxcd:
       enabled: false
+      update: true # Update the FluxCD configuration on each run
       branch: main
       user: User
       repo: GitOps
