@@ -1,4 +1,4 @@
-- include_tasks: utils/wait_talos.yaml
+- include_tasks: tasks/utils/wait_talos.yaml
 
 - name: Display reset countdown
   run_once: true
@@ -16,5 +16,4 @@
     pause: 1
 
 - name: Reset nodes
-  ansible.builtin.command: >
-    talosctl reset {{ talos_args }} --reboot --graceful=false --system-labels-to-wipe EPHEMERAL
+  ansible.builtin.command: talosctl reset {{ talos_args }} --reboot --graceful=false --system-labels-to-wipe EPHEMERAL

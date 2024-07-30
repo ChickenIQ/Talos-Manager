@@ -1,0 +1,40 @@
+- name: Set config vars
+  ansible.builtin.set_fact:
+    controlplanes: "{{ groups['controlplane'] | default('') | map ('extract', hostvars, 'inventory_hostname') | join(' ') }}"
+    workers: "{{ groups['worker'] | default('') | map ('extract', hostvars, 'inventory_hostname') | join(' ') }}"
+
+- name: Add endpoints and nodes to talosconfig
+  environment:
+    TALOSCONFIG: "{{ talosconfig }}"
+  ansible.builtin.shell: |
+    talosctl config endpoint {{ controlplanes }}
+    talosctl config node {{ controlplanes }} {{ workers }}
+
+- name: Check if host talosconfig exists
+  ansible.builtin.stat:
+    path: "{{ talosconfig_host }}"
+  register: _talosconfig_host
+
+- name: Copy talosconfig
+  ansible.builtin.copy:
+    src: "{{ talosconfig }}"
+    dest: "{{ talosconfig_host }}"
+  when: _talosconfig_host.stat.exists == false
+
+- name: Backup talosconfig
+  ansible.builtin.copy:
+    src: "{{ talosconfig_host }}"
+    dest: "{{ talosconfig_host }}.bak"
+  when: _talosconfig_host.stat.exists
+
+# An empty context is used to prevent issues when removing the previous context
+# The previous talosconfig is removed to make sure the new one is merged correctly
+- name: Merge talosconfig
+  environment:
+    TALOSCONFIG: "{{ talosconfig_host }}"
+  ansible.builtin.shell: |
+    talosctl config use-context '' || true
+    talosctl config remove {{ cluster_name }} -y || true
+    talosctl config merge {{ talosconfig }}
+    talosctl config use-context {{ cluster_name }}
+  when: _talosconfig_host.stat.exists

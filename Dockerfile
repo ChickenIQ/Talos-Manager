@@ -16,7 +16,7 @@ RUN curl -L https://api.github.com/repos/fluxcd/flux2/releases/latest -o /tmp/me
     
 RUN adduser -D alpine && mkdir -p /data/patches /data/configs /host && chown -R alpine:alpine /data /host
     
-COPY . /src
+COPY ./src /src
 
 WORKDIR /src
 

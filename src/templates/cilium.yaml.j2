@@ -24,8 +24,6 @@ machine:
               toPorts:
                 - ports:
                     - port: "53"
-                      protocol: TCP
-                    - port: "53"
                       protocol: UDP
       path: /var/lib/networkpolicies/dns.yaml
       permissions: 0o444
@@ -97,8 +95,6 @@ machine:
                     k8s-app: kube-dns
               toPorts:
                 - ports:
-                    - port: "53"
-                      protocol: TCP
                     - port: "53"
                       protocol: UDP
                   rules:

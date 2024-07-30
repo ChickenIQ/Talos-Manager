@@ -38,5 +38,3 @@
   when: _fluxcd_namespace.changed or _sops_secret.changed or fluxcd.update | default(false)
   register: _output
   until: _output.rc == 0
-  retries: 5
-  delay: 5

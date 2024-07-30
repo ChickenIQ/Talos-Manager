@@ -1,39 +1,30 @@
 - include_tasks: tasks/utils/wait_talos.yaml
 
-- name: Check if node has been initialized
-  ansible.builtin.command: >
-    talosctl get machinestatus {{ talos_args }} --insecure
+- name: Check if the node has been initialized
+  ansible.builtin.command: talosctl get machinestatus {{ talos_args }} --insecure
   register: node_status
   until: node_status.rc == 0 or node_status.stderr.find("certificate required") != -1
   changed_when: false
   failed_when: false
-  retries: 5
-  delay: 5
 
 - name: Set node status
   ansible.builtin.set_fact:
-    node_status: "{{ 'initialized' if node_status.rc != 0 else 'uninitialized' }}"
+    node_initialized: "{{ true if node_status.rc != 0 else false }}"
 
 - name: Get machine config before apply
-  ansible.builtin.command: >
-    talosctl get mc {{ talos_args }} -o yaml
+  ansible.builtin.command: talosctl get mc {{ talos_args }} -o yaml
   register: mc_before
   until: mc_before.rc == 0
   changed_when: false
   no_log: true
-  retries: 5
-  delay: 5
-  when: node_status == "initialized"
+  when: node_initialized
 
 - name: Check if the controlplane is ready
-  ansible.builtin.command: >
-    talosctl get machinestatus {{ talos_args }} -o yaml
+  ansible.builtin.command: talosctl get machinestatus {{ talos_args }} -o yaml
   register: controlplane_ready
   until: controlplane_ready.rc == 0
   changed_when: false
-  retries: 5
-  delay: 5
-  when: node_status == "initialized" and node_type == "controlplane"
+  when: node_initialized and node_type == "controlplane"
 
 - name: Configure machine patches
   ansible.builtin.copy:
@@ -41,42 +32,27 @@
     dest: "{{ datastore }}/patches/{{ inventory_hostname }}.yaml"
   when: patch | default({}) | length > 0
 
-- name: Apply config
-  ansible.builtin.shell: |
-    talosctl apply {{ talos_args }} --file="{{ datastore }}/configs/{{ node_type }}.yaml" \
-      --config-patch="{{ "@" + datastore + "/patches/" + inventory_hostname + ".yaml" if patch | default({}) | length > 0 }}" \
-      --insecure="{{ true if node_status == 'uninitialized' else false }}" && \
-    {% if node_status == 'initialized' %}
-    sh -c 'ARGS="{{ talos_args }}" /src/scripts/wait_reboot.sh' && \
-    {% if node_type == 'controlplane' and (controlplane_ready.stdout | from_yaml).spec.status.ready %}
-    sh -c 'ARGS="{{ talos_args }}" /src/scripts/wait_controlplane.sh' 
-    {% endif %}
-    {% endif %}
-  register: _output
-  until: _output.rc == 0
-  throttle: 1
-  retries: 0
-  delay: 5
+- name: Apply configs
+  run_once: true
+  include_tasks: tasks/actions/apply.yaml
+  with_items: "{{ ansible_play_hosts }}" # Serial Execution
 
 - name: Get machine config after apply
-  ansible.builtin.command: >
-    talosctl get mc {{ talos_args }} -o yaml
+  ansible.builtin.command: talosctl get mc {{ talos_args }} -o yaml
   register: mc_after
   until: mc_after.rc == 0
   changed_when: false
   no_log: true
-  retries: 5
-  delay: 5
-  when: node_status == "initialized"
+  when: node_initialized
 
-- name: Get talos image before and after
+- name: Set talos image vars
   ansible.builtin.set_fact:
     talos_image_before: "{{ (mc_before.stdout | from_yaml).spec.machine.install.image }}"
     talos_image_after: "{{ (mc_after.stdout | from_yaml).spec.machine.install.image }}"
-  when: node_status == "initialized"
+  when: node_initialized
 
-- name: Upgrade nodes if needed
-  ansible.builtin.command: >
-    talosctl upgrade {{ talos_args }} --force --preserve --image={{ talos_image_after }} --wait
-  throttle: 1
-  when: node_status == "initialized" and talos_image_before != talos_image_after
+- name: Upgrade nodes
+  run_once: true
+  include_tasks: tasks/actions/upgrade.yaml
+  with_items: "{{ ansible_play_hosts }}" # Serial Execution
+  when: node_initialized and talos_image_before != talos_image_after

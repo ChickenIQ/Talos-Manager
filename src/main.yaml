@@ -27,19 +27,27 @@
   tasks:
     - name: Generate configs
       run_once: true
-      include_tasks: tasks/configure.yaml
+      include_tasks: tasks/generate.yaml
+
+    - name: Get talosconfig
+      run_once: true
+      include_tasks: tasks/talosconfig.yaml
 
     - name: Apply configs
       include_tasks: tasks/apply.yaml
 
     - name: Reset nodes
-      include_tasks: tasks/reset.yaml
+      include_tasks: tasks/actions/reset.yaml
       when: task == "reset"
 
     - name: Bootstrap cluster
       run_once: true
       include_tasks: tasks/bootstrap.yaml
       when: node_type == 'controlplane'
+
+    - name: Get kubeconfig
+      run_once: true
+      include_tasks: tasks/kubeconfig.yaml
 
     - name: Run post apply tasks
       run_once: true

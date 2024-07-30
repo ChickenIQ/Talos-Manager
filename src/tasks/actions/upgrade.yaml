@@ -1,0 +1,4 @@
+- include_tasks: tasks/utils/wait_talos.yaml
+
+- name: Upgrade node and wait
+  ansible.builtin.command: talosctl upgrade {{ talos_args }} --force --preserve --image={{ talos_image_after }} --wait

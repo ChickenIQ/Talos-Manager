@@ -1,55 +1,14 @@
 - include_tasks: tasks/utils/wait_talos.yaml
 
 - name: Make sure etcd is ready
-  ansible.builtin.command: >
-    talosctl service etcd status {{ talos_args }}
+  ansible.builtin.command: talosctl service etcd status {{ talos_args }}
   register: _etcd
   until: _etcd.rc == 0 and (_etcd.stdout.find('STATE    Preparing') != -1 or _etcd.stdout.find('STATE    Running') != -1)
   changed_when: false
   retries: 50
-  delay: 5
 
 - name: Bootstrap cluster
-  ansible.builtin.command: >
-    talosctl bootstrap {{ talos_args }}
+  ansible.builtin.command: talosctl bootstrap {{ talos_args }}
   when: _etcd.stdout.find('STATE    Running') == -1
-  until: _output.rc == 0
-  register: _output
-  retries: 5
-  delay: 5
-
-- include_tasks: tasks/utils/wait_k8s.yaml
-
-- name: Get kubeconfig
-  ansible.builtin.command: >
-    talosctl kubeconfig {{ talos_args }} {{ datastore }}/configs/kubeconfig --merge=false --force --force-context-name {{ cluster_name }}
   register: _output
   until: _output.rc == 0
-  retries: 5
-  delay: 5
-
-- name: Check if host kubeconfig exists
-  ansible.builtin.stat:
-    path: "{{ kubeconfig_host }}"
-  register: _kubeconfig_host
-
-- name: Copy kubeconfig
-  ansible.builtin.copy:
-    src: "{{ kubeconfig }}"
-    dest: "{{ kubeconfig_host }}"
-  when: _kubeconfig_host.stat.exists == false
-
-- name: Backup kubeconfig
-  ansible.builtin.copy:
-    src: "{{ kubeconfig_host }}"
-    dest: "{{ kubeconfig_host }}.bak"
-  when: _kubeconfig_host.stat.exists
-
-- name: Merge kubeconfig
-  ansible.builtin.command: >
-    talosctl kubeconfig {{ talos_args }} {{ kubeconfig_host }} --force --force-context-name {{ cluster_name }}
-  register: _output
-  until: _output.rc == 0
-  retries: 5
-  delay: 5
-  when: _kubeconfig_host.stat.exists
