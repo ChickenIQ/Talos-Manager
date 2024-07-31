@@ -34,7 +34,7 @@ Please note that this project is still in development and is not yet ready for p
 
 ## Quick Start
 
-1. Download the **_[example config file](https://github.com/ChickenIQ/Talos-Manager/blob/main/example.yaml)_** fron this repository.
+1. Download the **_[example config file](https://github.com/ChickenIQ/Talos-Manager/blob/main/example.yaml)_** from this repository.
 
 2. Generate your `secrets` string using the following command:
 
