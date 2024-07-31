@@ -33,9 +33,10 @@
   when: patch | default({}) | length > 0
 
 - name: Apply configs
-  run_once: true
   include_tasks: tasks/actions/apply.yaml
-  with_items: "{{ ansible_play_hosts }}" # Serial Execution
+  # Serial Execution
+  when: item == inventory_hostname
+  with_items: "{{ ansible_play_hosts }}"
 
 - name: Get machine config after apply
   ansible.builtin.command: talosctl get mc {{ talos_args }} -o yaml
@@ -52,7 +53,7 @@
   when: node_initialized
 
 - name: Upgrade nodes
-  run_once: true
   include_tasks: tasks/actions/upgrade.yaml
-  with_items: "{{ ansible_play_hosts }}" # Serial Execution
-  when: node_initialized and talos_image_before != talos_image_after
+  # Serial Execution
+  with_items: "{{ ansible_play_hosts }}"
+  when: item == inventory_hostname and node_initialized and talos_image_before != talos_image_after
