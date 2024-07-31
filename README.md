@@ -4,11 +4,13 @@ A simple, yet powerful, tool to create and manage your Kubernetes clusters using
 
 Please note that this project is still in development and is not yet ready for production use. There **WILL** be breaking changes.
 
+This project is designed to be used with bare metal clusters, but it can be used anywhere, as long as you can get the node in maintenace mode and connect to it.
+
 ## Requirements
 
 - [Docker](https://www.docker.com/) or [Podman](https://podman.io/)
 
-- Somewhere to deploy [Talos](https://www.talos.dev/latest/talos-guides/install/)
+- Somewhere to deploy Talos
 
 ## Features
 
@@ -26,11 +28,11 @@ Please note that this project is still in development and is not yet ready for p
 
 - FluxCD integration
 
-- Support for jinja2 templating in config
-
 - One config file to rule them all
 
 - Config file encryption and automatic decryption
+
+- Support for jinja2 templating in the config file config
 
 ## Quick Start
 
@@ -42,7 +44,7 @@ Please note that this project is still in development and is not yet ready for p
 docker run ghcr.io/chickeniq/talos-manager gen-secrets
 ```
 
-3. Copy the output of the previous command and paste it in the `secrets` field of the config file.
+3. Copy the output of the previous command and paste it in the `secrets` field in your config file.
 
 4. Replace the example values with your own and remove what you don't need.
 
@@ -78,9 +80,11 @@ docker run -it --rm `
 
 ## Encryption
 
-Talos-Manager supports encryption and decryption of the config file using ansible-vault. It is highly recommended to encrypt your config file as it will contain important secrets and information about your cluster.
+Talos-Manager supports encryption and decryption of the config file using ansible-vault.
 
-You will have to mount the key file to the container for this to work. You can do this by adding the following line to your apply command
+It is highly recommended to encrypt your config file as it will contain important secrets and information about your cluster.
+
+You will have to mount the key file to the container for this to work. You can do this by adding the following line to your apply command.
 
 ```bash
 -v PATH_TO_KEY_FILE:/host/.vault_key
@@ -96,7 +100,7 @@ docker run -it --rm -v PATH_TO_KEY_FILE:/host/.vault_key ghcr.io/chickeniq/talos
 
 #### Decryption:
 
-**Note:** You don't have to decrypt the config file to apply it, it will be done automatically as long as it is mounted.
+**Note:** You don't have to decrypt the config file to apply it, it will be done automatically as long as it is mounted to the correct path.
 
 ```bash
 docker run -it --rm -v PATH_TO_KEY_FILE:/host/.vault_key ghcr.io/chickeniq/talos-manager decrypt
