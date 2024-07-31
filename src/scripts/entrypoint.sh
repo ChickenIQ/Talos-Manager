@@ -14,11 +14,16 @@ apply () {
 }
 
 reset () {
+  if [ "$2" != "--no-confirm" ]; then
   echo "This command will reset the cluster to its initial state, then bootstrap it again."
   echo "Warning! Data loss will occur!"
   echo "Do you want to continue? [y/N]"
   read -r CONFIRM
-  if [ "$CONFIRM" = "y" ]; then
+  else 
+    export CONFIRM="y"
+  fi
+  
+  if [ "$CONFIRM" == "y" ]; then
     TASK="reset" ansible-playbook $ANSIBLE_ARGS $1
   fi
 }
@@ -54,13 +59,15 @@ case "$1" in
     apply
   ;;
   "apply-debug")
+    export ANSIBLE_DISPLAY_SKIPPED_HOSTS=true
     apply -vv
   ;;
   "reset")
-    reset
+    reset "" $2
   ;;
   "reset-debug")
-    reset -vv
+    export ANSIBLE_DISPLAY_SKIPPED_HOSTS=true
+    reset -vv $2
   ;;
   "encrypt")
     vault_action encrypt

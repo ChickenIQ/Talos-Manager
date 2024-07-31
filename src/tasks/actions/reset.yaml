@@ -3,7 +3,7 @@
 - name: Display reset countdown
   run_once: true
   vars:
-    countdown: 10
+    countdown: 5
   ansible.builtin.debug:
     msg:
       [

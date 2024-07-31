@@ -5,7 +5,7 @@
   register: _etcd
   until: _etcd.rc == 0 and (_etcd.stdout.find('STATE    Preparing') != -1 or _etcd.stdout.find('STATE    Running') != -1)
   changed_when: false
-  retries: 50
+  retries: 120
 
 - name: Bootstrap cluster
   ansible.builtin.command: talosctl bootstrap {{ talos_args }}

@@ -30,6 +30,19 @@
     - name: Set node type
       ansible.builtin.set_fact:
         node_type: "{{ 'controlplane' if 'controlplane' in group_names else 'worker' }}"
+
+    - include_tasks: tasks/utils/wait_talos.yaml
+
+    - name: Check if the node has been initialized
+      ansible.builtin.command: talosctl get machinestatus {{ talos_args }} --insecure
+      register: node_status
+      until: node_status.rc == 0 or node_status.stderr.find("certificate required") != -1
+      changed_when: false
+      failed_when: false
+
+    - name: Set node status
+      ansible.builtin.set_fact:
+        node_initialized: "{{ true if node_status.rc != 0 else false }}"
   tasks:
     - name: Generate configs
       run_once: true
@@ -39,12 +52,12 @@
       run_once: true
       include_tasks: tasks/talosconfig.yaml
 
-    - name: Apply configs
-      include_tasks: tasks/apply.yaml
-
     - name: Reset nodes
       include_tasks: tasks/actions/reset.yaml
-      when: task == "reset"
+      when: task == "reset" and node_initialized
+
+    - name: Apply configs
+      include_tasks: tasks/apply.yaml
 
     - name: Bootstrap cluster
       run_once: true
