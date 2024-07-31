@@ -1,6 +1,7 @@
 - name: Talos
   hosts: cluster
   any_errors_fatal: true
+  gather_facts: false
   vars:
     datastore: "/data"
     talosconfig: "{{ datastore }}/configs/talosconfig"
@@ -12,6 +13,11 @@
 
     talos_args: "-n {{ inventory_hostname }} -e {{ inventory_hostname }} --talosconfig {{ talosconfig }}"
   pre_tasks:
+    - name: Set task
+      run_once: true
+      ansible.builtin.set_fact:
+        task: "{{ lookup('env', 'TASK') }}"
+
     - name: Ensure the required directories are present
       run_once: true
       ansible.builtin.file:

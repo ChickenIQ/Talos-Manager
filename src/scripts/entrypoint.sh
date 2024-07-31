@@ -9,8 +9,18 @@ if [ -f $VAULT_FILE ]; then
   export KEY_EXISTS=true
 fi
 
-start () {
-  ansible-playbook $ANSIBLE_ARGS $1
+apply () {
+  TASK="apply" ansible-playbook $ANSIBLE_ARGS $1
+}
+
+reset () {
+  echo "This command will reset the cluster to its initial state, then bootstrap it again."
+  echo "Warning! Data loss will occur!"
+  echo "Do you want to continue? [y/N]"
+  read -r CONFIRM
+  if [ "$CONFIRM" = "y" ]; then
+    TASK="reset" ansible-playbook $ANSIBLE_ARGS $1
+  fi
 }
 
 vault_action() {
@@ -26,27 +36,32 @@ vault_action() {
 
 show_commands() {
   echo "Available commands:"
-  echo "sh:           Start a shell"
-  echo "start:        Execute normally"
-  echo "debug:        Execute in debug mode"
-  echo "encrypt:      Encrypt the config file"
-  echo "decrypt:      Decrypt the config file"
-  echo "gen-secrets:  Generate secrets for the config file"
+  echo "apply:          Apply the config file"
+  echo "reset:          Reset the cluster"
+  echo "apply-debug:    Apply the config file (verbose)"
+  echo "reset-debug:    Reset the cluster (verbose)"
+  echo "encrypt:        Encrypt the config file"
+  echo "decrypt:        Decrypt the config file"
+  echo "gen-secrets:    Generate secrets for the config file"
 }
 
 case "$1" in
-  "")
-    start
+  "--")
+    shift
+    exec "$@"
   ;;
-  "sh")
-    sh
+  "apply")
+    apply
   ;;
-  "start")
-    start
+  "apply-debug")
+    apply -vv
   ;;
-  "debug")
-    start -vv
-    ;;
+  "reset")
+    reset
+  ;;
+  "reset-debug")
+    reset -vv
+  ;;
   "encrypt")
     vault_action encrypt
     ;;
@@ -57,8 +72,6 @@ case "$1" in
     talosctl gen secrets -o /tmp/secrets.yaml && gzip /tmp/secrets.yaml && base64 /tmp/secrets.yaml.gz -w0
     ;;
   *)
-    echo "Unknown command!"
-    echo ""
     show_commands
     ;;
 esac
