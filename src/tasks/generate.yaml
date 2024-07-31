@@ -26,7 +26,7 @@
         content: "{{ cilium.helm_values | to_nice_yaml(2,false) }}"
         dest: "{{ datastore }}/configs/cilium-values.yaml"
       when: cilium.helm_values is defined and cilium.helm_values | length > 0
-  when: cni | default('flannel') == 'cilium'
+  when: cilium.enabled | default(false)
 
 - name: Create secrets file
   no_log: true
@@ -48,12 +48,12 @@
 - name: Generate configs
   ansible.builtin.command: >
     talosctl gen config {{ cluster_name }} {{ cluster_endpoint }} -o {{ datastore }}/configs/ --with-examples=false --with-docs=false -f
-    --config-patch-control-plane "{{ "@" + datastore + "/patches/cilium.yaml" if cni | default('flannel') == 'cilium' }}"
+    --config-patch-control-plane "{{ "@" + datastore + "/patches/cilium.yaml" if cilium.enabled | default(false) }}"
     --config-patch-control-plane "{{ "@" + datastore + "/patches/controlplane.yaml" if patches.controlplane | default({}) | length > 0 }}"
     --config-patch-worker "{{ "@" + datastore + "/patches/worker.yaml" if patches.worker | default({}) | length > 0 }}"
     --config-patch "{{ "@" + datastore + "/patches/global.yaml" if patches.global | default({}) | length > 0 }}"
-    --install-image "{{ talos_image | default('ghcr.io/siderolabs/installer') + ':' + talos_version }}"
-    --kubernetes-version "{{ k8s_version | default('') }}"
     --with-secrets "{{ datastore }}/configs/secrets.yaml"
     --additional-sans "{{ additional_sans }}"
-    --talos-version "{{ talos_version }}"
+    --install-image "{{ talos_image | default('ghcr.io/siderolabs/installer') + ':' + talos_version | default('v1.7.5') }}"
+    --talos-version "{{ talos_version | default('v1.7.5')}}"
+    --kubernetes-version "{{ k8s_version | default('1.30.1') }}"

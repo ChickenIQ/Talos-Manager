@@ -73,7 +73,7 @@
       block:
         - name: Setup Cilium
           include_tasks: tasks/post/cilium.yaml
-          when: cni | default('flannel') == "cilium"
+          when: cilium.enabled | default(false)
 
         - name: Setup FluxCD
           include_tasks: tasks/post/fluxcd.yaml

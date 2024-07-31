@@ -30,12 +30,6 @@ cluster:
     # This example sets the cluster endpoint to the ip of the first controlplane node
     cluster_endpoint: https://{{ groups['controlplane'][0] }}:6443
 
-    # The network plugin to use (cilium | flannel)
-    # If you choose cilium, flannel will be automatically disabled
-    # If you later chose to switch to flannel, you must manually remove cilium first
-    # This can be done by using helm uninstall cilium -n kube-system
-    cni: cilium
-
     # Add additional SANs to the TLS certificate
     # Controlplane IPs are automatically added
     # tls_sans:
@@ -67,6 +61,7 @@ cluster:
       # worker: {}
 
     cilium: # Optional
+      enabled: false
       # Cilium version to install
       version: 1.16.0 # Optional, but recommended
 
@@ -98,10 +93,10 @@ cluster:
     # Only github repositories are currently supported
     fluxcd:
       enabled: false
-      update: true # Update the FluxCD configuration on each run (Optional)
+      update: false # Update the FluxCD configuration every run (Optional)
       branch: main
-      user: User
-      repo: GitOps
+      username: user
+      repository: example
       path: clusters/example # Path to the FluxCD configuration.
       token: "" # GitHub PAT (Required permissions: Administration: RW, Contents: RW, Metadata: RO)
       sops: "" # Base64 encoded SOPS private key (Optional)

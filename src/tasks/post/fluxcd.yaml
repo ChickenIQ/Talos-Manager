@@ -33,7 +33,7 @@
     GITHUB_TOKEN: "{{ fluxcd.token }}"
   ansible.builtin.command: >
     flux bootstrap github --personal
-      --owner={{ fluxcd.user }} --repository={{ fluxcd.repo }}
+      --owner={{ fluxcd.username }} --repository={{ fluxcd.repository }}
       --branch={{ fluxcd.branch }} --path={{ fluxcd.path }}
   when: _fluxcd_namespace.changed or _sops_secret.changed or fluxcd.update | default(false)
   register: _output

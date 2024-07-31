@@ -15,10 +15,10 @@ apply () {
 
 reset () {
   if [ "$2" != "--no-confirm" ]; then
-  echo "This command will reset the cluster to its initial state, then bootstrap it again."
-  echo "Warning! Data loss will occur!"
-  echo "Do you want to continue? [y/N]"
-  read -r CONFIRM
+    echo "This command will reset the cluster to its initial state, then bootstrap it again."
+    echo "Warning! Data loss will occur!"
+    echo "Do you want to continue? [y/N]"
+    read -r CONFIRM
   else 
     export CONFIRM="y"
   fi
@@ -29,14 +29,11 @@ reset () {
 }
 
 vault_action() {
-  if [ $KEY_EXISTS ]; then
-    # Avoid ansible bug when encrypting/decrypting a file in place
-    CONTENT=$(ansible-vault $1 /host/config.yaml --vault-password-file $VAULT_FILE --output -) && 
-    echo "$CONTENT" > /host/config.yaml
-    echo "File $1ed successfully."
-  else
-    echo "Vault key not found."
-  fi
+  if [ ! $KEY_EXISTS ]; then echo "Vault key not found."; exit 1; fi 
+  # Avoid ansible bug when encrypting/decrypting a file in place
+  CONTENT=$(ansible-vault $1 /host/config.yaml --vault-password-file $VAULT_FILE --output -) && 
+  echo "$CONTENT" > /host/config.yaml
+  echo "File $1ed successfully."
 }
 
 show_commands() {
@@ -51,23 +48,17 @@ show_commands() {
 }
 
 case "$1" in
-  "--")
-    shift
-    exec "$@"
-  ;;
   "apply")
     apply
   ;;
   "apply-debug")
-    export ANSIBLE_DISPLAY_SKIPPED_HOSTS=true
-    apply -vv
+    ANSIBLE_DISPLAY_SKIPPED_HOSTS=true apply -vv
   ;;
   "reset")
     reset "" $2
   ;;
   "reset-debug")
-    export ANSIBLE_DISPLAY_SKIPPED_HOSTS=true
-    reset -vv $2
+    ANSIBLE_DISPLAY_SKIPPED_HOSTS=true reset -vv $2
   ;;
   "encrypt")
     vault_action encrypt
@@ -78,6 +69,10 @@ case "$1" in
   "gen-secrets")
     talosctl gen secrets -o /tmp/secrets.yaml && gzip /tmp/secrets.yaml && base64 /tmp/secrets.yaml.gz -w0
     ;;
+  "--")
+    shift
+    exec "$@"
+  ;;
   *)
     show_commands
     ;;
