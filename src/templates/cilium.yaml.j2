@@ -4,7 +4,7 @@ cluster:
       name: none
   proxy:
     disabled: true
-{% if cilium.use_default_policy | default(false) %}
+{% if addons.cilium.use_default_policy | default(false) %}
 machine:
   files:
     - content: |
@@ -25,7 +25,7 @@ machine:
                 - ports:
                     - port: "53"
                       protocol: UDP
-      path: /var/lib/networkpolicies/dns.yaml
+      path: /var/lib/Talos-Manager/cilium/kube-dns.yaml
       permissions: 0o444
       op: create
 
@@ -45,17 +45,17 @@ machine:
           egress:
             - toEntities:
                 - all
-      path: /var/lib/networkpolicies/kube-system.yaml
+      path: /var/lib/Talos-Manager/cilium/kube-system.yaml
       permissions: 0o444
       op: create
 
-{% if cilium.namespace | default('kube-system') != 'kube-system' %}
+{% if addons.cilium.namespace | default('kube-system') != 'kube-system' %}
     - content: |
         apiVersion: cilium.io/v2
         kind: CiliumNetworkPolicy
         metadata:
           name: cilium
-          namespace: {{ cilium.namespace }}
+          namespace: {{ addons.cilium.namespace }}
         spec:
           endpointSelector: {}
           ingress:
@@ -66,13 +66,12 @@ machine:
           egress:
             - toEntities:
                 - all
-      path: /var/lib/networkpolicies/cilium.yaml
+      path: /var/lib/Talos-Manager/cilium/cilium-namespace.yaml
       permissions: 0o444
       op: create
 {% endif %}
-
     - content: |
-        apiVersion: cilium.io/v2  
+        apiVersion: cilium.io/v2
         kind: CiliumClusterwideNetworkPolicy
         metadata:
           name: default
@@ -81,7 +80,11 @@ machine:
             matchExpressions:
               - key: io.kubernetes.pod.namespace
                 operator: NotIn
-                values: [kube-system{{ "," + cilium.namespace if cilium.namespace | default('kube-system') != 'kube-system' }}]  
+                values:
+                  - kube-system
+{% if addons.cilium.namespace | default('kube-system') != 'kube-system' %}
+                  - {{ addons.cilium.namespace }}
+{% endif %}
           ingress:
             - fromEntities:
                 - world
@@ -100,7 +103,7 @@ machine:
                   rules:
                     dns:
                       - matchPattern: "*"
-      path: /var/lib/networkpolicies/default.yaml
+      path: /var/lib/Talos-Manager/cilium/default.yaml
       permissions: 0o444
       op: create
 {% endif %}

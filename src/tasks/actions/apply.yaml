@@ -3,7 +3,7 @@
 - name: Apply config and wait for node
   ansible.builtin.shell: |
     talosctl apply {{ talos_args }} --file="{{ datastore }}/configs/{{ node_type }}.yaml" \
-      --config-patch="{{ "@" + datastore + "/patches/" + inventory_hostname + ".yaml" if patch | default({}) | length > 0 }}" \
+      --config-patch="{{ "@" + datastore + "/patches/" + inventory_hostname + ".yaml" if machinepatches | default({}) | length > 0 }}" \
       --insecure="{{ false if node_initialized else true }}" || exit 1
     {% if node_initialized %}
     NODE_TYPE="{{ node_type }}" /src/scripts/wait_node.sh "{{ talos_args }}"

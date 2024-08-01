@@ -1,0 +1,4 @@
+cluster:
+  children:
+    controlplane:
+    worker:

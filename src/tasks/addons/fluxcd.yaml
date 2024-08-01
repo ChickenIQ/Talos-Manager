@@ -23,18 +23,18 @@
         name: sops-gpg
         namespace: flux-system
       stringData:
-        sops.asc: "{{ lookup('pipe', 'echo ' + fluxcd.sops + ' | base64 -d | gunzip') }}"
-  when: fluxcd.sops | default('') != ""
+        sops.asc: "{{ lookup('pipe', 'echo ' + addons.fluxcd.sops + ' | base64 -d | gunzip') }}"
+  when: addons.fluxcd.sops | default('') != ""
   register: _sops_secret
 
 - name: Install FluxCD
   environment:
     KUBECONFIG: "{{ kubeconfig }}"
-    GITHUB_TOKEN: "{{ fluxcd.token }}"
+    GITHUB_TOKEN: "{{ addons.fluxcd.token }}"
   ansible.builtin.command: >
     flux bootstrap github --personal
-      --owner={{ fluxcd.username }} --repository={{ fluxcd.repository }}
-      --branch={{ fluxcd.branch }} --path={{ fluxcd.path }}
-  when: _fluxcd_namespace.changed or _sops_secret.changed or fluxcd.update | default(false)
+      --owner={{ addons.fluxcd.username }} --repository={{ addons.fluxcd.repository }}
+      --branch={{ addons.fluxcd.branch }} --path={{ addons.fluxcd.path }}
+  when: _fluxcd_namespace.changed or _sops_secret.changed or addons.fluxcd.update | default(false)
   register: _output
   until: _output.rc == 0

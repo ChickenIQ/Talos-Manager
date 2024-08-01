@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
-export ARGS=$@
+
+ARGS=$@
 CLUSTER_BOOTSRAPPED=false
 
 get_stage() { 

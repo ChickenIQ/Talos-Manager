@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-export ANSIBLE_ARGS="/src/main.yaml --connection local -i /host/config.yaml"
+export ANSIBLE_ARGS="/src/main.yaml --connection local -i /src/group.yaml -i /host/config.yaml"
 export VAULT_FILE="/host/.vault_key"
 
 if [ -f $VAULT_FILE ]; then

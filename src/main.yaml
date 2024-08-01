@@ -1,7 +1,7 @@
 - name: Talos
   hosts: cluster
-  any_errors_fatal: true
   gather_facts: false
+  any_errors_fatal: true
   vars:
     datastore: "/data"
     talosconfig: "{{ datastore }}/configs/talosconfig"
@@ -68,13 +68,13 @@
       run_once: true
       include_tasks: tasks/kubeconfig.yaml
 
-    - name: Run post apply tasks
+    - name: Setup addons
       run_once: true
       block:
         - name: Setup Cilium
-          include_tasks: tasks/post/cilium.yaml
-          when: cilium.enabled | default(false)
+          include_tasks: tasks/addons/cilium.yaml
+          when: addons.cilium.enabled | default(false)
 
         - name: Setup FluxCD
-          include_tasks: tasks/post/fluxcd.yaml
-          when: fluxcd.enabled | default(false)
+          include_tasks: tasks/addons/fluxcd.yaml
+          when: addons.fluxcd.enabled | default(false)

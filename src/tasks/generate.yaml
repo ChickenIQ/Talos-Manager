@@ -23,10 +23,10 @@
 
     - name: Create cilium values file
       ansible.builtin.copy:
-        content: "{{ cilium.helm_values | to_nice_yaml(2,false) }}"
+        content: "{{ addons.cilium.helm_values | to_nice_yaml(2,false) }}"
         dest: "{{ datastore }}/configs/cilium-values.yaml"
-      when: cilium.helm_values is defined and cilium.helm_values | length > 0
-  when: cilium.enabled | default(false)
+      when: addons.cilium.helm_values is defined and addons.cilium.helm_values | length > 0
+  when: addons.cilium.enabled | default(false)
 
 - name: Create secrets file
   no_log: true
@@ -48,7 +48,7 @@
 - name: Generate configs
   ansible.builtin.command: >
     talosctl gen config {{ cluster_name }} {{ cluster_endpoint }} -o {{ datastore }}/configs/ --with-examples=false --with-docs=false -f
-    --config-patch-control-plane "{{ "@" + datastore + "/patches/cilium.yaml" if cilium.enabled | default(false) }}"
+    --config-patch-control-plane "{{ "@" + datastore + "/patches/cilium.yaml" if addons.cilium.enabled | default(false) }}"
     --config-patch-control-plane "{{ "@" + datastore + "/patches/controlplane.yaml" if patches.controlplane | default({}) | length > 0 }}"
     --config-patch-worker "{{ "@" + datastore + "/patches/worker.yaml" if patches.worker | default({}) | length > 0 }}"
     --config-patch "{{ "@" + datastore + "/patches/global.yaml" if patches.global | default({}) | length > 0 }}"

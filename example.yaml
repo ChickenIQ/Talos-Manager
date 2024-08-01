@@ -1,26 +1,25 @@
 # An example configuration file for Talos-Manager
 # Remember, this is just an Ansible inventory file
 # You can even use jinja2 templating in this file
+controlplane:
+  hosts:
+    192.168.1.100:
+      machinepatches:
+        machine:
+          network:
+            hostname: a
+
+worker:
+  hosts:
+    192.168.1.200:
+      machinepatches:
+        machine:
+          network:
+            hostname: b
+    # All nodes in range from 192.168.1.10 to 192.168.1.20
+    # 192.168.1.[10:20]:
+
 cluster:
-  children:
-    controlplane:
-      hosts:
-        192.168.1.100:
-          patch:
-            machine:
-              network:
-                hostname: a
-
-    worker:
-      hosts:
-        192.168.1.200:
-          patch:
-            machine:
-              network:
-                hostname: b
-        # All nodes in range from 192.168.1.10 to 192.168.1.20
-        # 192.168.1.[10:20]:
-
   vars:
     # Make sure you change the cluster name to something unique
     # WARNING! This will overwrite the existing context with this name in your talosconfig and kubeconfig
@@ -41,9 +40,14 @@ cluster:
     # Patches override these values if their respective fields are set
     # Upgrades are automatic, if an image/version change is detected
 
-    # talos_image: ghcr.io/siderolabs/installer # (Optional)
+    talos_image: ghcr.io/siderolabs/installer # (Optional)
     talos_version: v1.7.5 # (Optional, but recommended)
     k8s_version: 1.30.1 # (Optional, but recommended)
+
+    # Gzipped,Base64 encoded secrets file
+    # You can generate this variable by running:
+    # docker run ghcr.io/chickeniq/talos-manager gen-secrets
+    secrets: ""
 
     # Add additional patches to the selected category (Optional)
     # You can also define per machine patches by adding vars.patch to the node as demonstrated above
@@ -60,43 +64,37 @@ cluster:
 
       # worker: {}
 
-    cilium: # Optional
-      enabled: false
-      # Cilium version to install
-      version: 1.16.0 # Optional, but recommended
+    addons:
+      cilium:
+        enabled: false
+        # Cilium version to install
+        version: 1.16.0 # Optional, but recommended
 
-      # Namespace to install cilium to
-      namespace: kube-system # Optional
+        # Namespace to install cilium to
+        namespace: kube-system # Optional
 
-      # Enable the default network policy
-      # This will block traffic between pods except coredns, but allow traffic to the internet
-      # kube-system and the specified cilium namespace are considered privileged namespaces,
-      # all pods in these namespaces have no restrictions.
-      # Pods running in the host network are also considered privileged, and have no restrictions.
-      use_default_policy: false # Optional
+        # Enable the default network policy
+        # This will block traffic between pods except coredns, but allow traffic to the internet
+        # kube-system and the specified cilium namespace are considered privileged namespaces,
+        # all pods in these namespaces have no restrictions.
+        # Pods running in the host network are also considered privileged, and have no restrictions.
+        use_default_policy: false # Optional
 
-      # Add additional values to the cilium helm chart
-      helm_values: # Optional
-        operator:
-          replicas: 1
-        # A simple load balancer similar to k3s's ServiceLB
-        # To use this feature, you must set the loadBalancerClass to "io.cilium/node"
-        nodeIPAM:
-          enabled: true
+        # Add additional values to the cilium helm chart
+        helm_values: # Optional
+          # A simple load balancer similar to k3s's ServiceLB
+          # To use this feature, you must set the loadBalancerClass to "io.cilium/node"
+          nodeIPAM:
+            enabled: true
 
-    # Gzipped,Base64 encoded secrets file
-    # You can generate this variable by running:
-    # docker run ghcr.io/chickeniq/talos-manager gen-secrets
-    secrets: ""
-
-    # Enable FluxCD (Optional)
-    # Only github repositories are currently supported
-    fluxcd:
-      enabled: false
-      update: false # Update the FluxCD configuration every run (Optional)
-      branch: main
-      username: user
-      repository: example
-      path: clusters/example # Path to the FluxCD configuration.
-      token: "" # GitHub PAT (Required permissions: Administration: RW, Contents: RW, Metadata: RO)
-      sops: "" # Base64 encoded SOPS private key (Optional)
+      # Enable FluxCD (Optional)
+      # Only github repositories are currently supported
+      fluxcd:
+        enabled: false
+        update: false # Update the FluxCD configuration every run (Optional)
+        branch: main
+        username: user
+        repository: example
+        path: clusters/example # Path to the FluxCD configuration.
+        token: "" # GitHub PAT (Required permissions: Administration: RW, Contents: RW, Metadata: RO)
+        sops: "" # Base64 encoded SOPS private key (Optional)
