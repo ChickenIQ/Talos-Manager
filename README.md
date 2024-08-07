@@ -55,7 +55,11 @@ mkdir ~/.talos ~/.kube
 ```
 
 ```bash
-docker run -it --rm -v ~/.talos:/.talos -v ~/.kube:/.kube -v ./example.yaml:/config.yaml ghcr.io/chickeniq/talos-manager apply
+docker run -it --rm \
+    -v ~/.kube:/.kube \
+    -v ~/.talos:/.talos \
+    -v ./example.yaml:/config.yaml \
+    ghcr.io/chickeniq/talos-manager apply
 ```
 
 ### Windows (Powershell)
@@ -65,7 +69,11 @@ mkdir ~\.talos,~\.kube
 ```
 
 ```powershell
-docker run -it --rm -v $env:USERPROFILE\.talos:/.talos -v $env:USERPROFILE\.kube:/.kube -v $PWD\example.yaml:/config.yaml ghcr.io/chickeniq/talos-manager apply
+docker run -it --rm `
+    -v $env:USERPROFILE\.kube:/.kube `
+    -v $env:USERPROFILE\.talos:/.talos `
+    -v $PWD\example.yaml:/config.yaml `
+    ghcr.io/chickeniq/talos-manager apply
 ```
 
 ## Encryption
@@ -77,13 +85,13 @@ It is highly recommended to encrypt your config file as it contains credentials 
 #### Encryption:
 
 ```bash
-docker run --rm -v ./config.yaml:/config.yaml -e VAULT_KEY="vault key" ghcr.io/chickeniq/talos-manager encrypt
+docker run --rm -v ./example.yaml:/config.yaml -e VAULT_KEY="vault key" ghcr.io/chickeniq/talos-manager encrypt
 ```
 
 #### Decryption:
 
 ```bash
-docker run --rm -v ./config.yaml:/config.yaml -e VAULT_KEY="vault key" ghcr.io/chickeniq/talos-manager decrypt
+docker run --rm -v ./example.yaml:/config.yaml -e VAULT_KEY="vault key" ghcr.io/chickeniq/talos-manager decrypt
 ```
 
 #### Automatic decryption
