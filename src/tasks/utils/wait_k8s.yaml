@@ -1,4 +1,4 @@
-- name: Wait for the Kubernetes API to be available
+- name: Make sure the Kubernetes API is available
   wait_for:
     host: "{{ cluster_endpoint | regex_replace('https://', '') | regex_replace(':6443', '') }}"
     port: 6443

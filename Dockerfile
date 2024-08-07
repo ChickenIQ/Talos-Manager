@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk add --no-cache ansible curl py3-kubernetes helm yq
+RUN apk add --no-cache ansible curl py3-kubernetes helm yq 
 
 RUN ansible-galaxy collection install kubernetes.core
 
@@ -14,13 +14,13 @@ RUN curl -L https://api.github.com/repos/fluxcd/flux2/releases/latest -o /tmp/me
     tar -xzvf /tmp/flux.tar.gz -C /usr/bin && rm /tmp/metadata.json /tmp/flux.tar.gz && \
     chmod +x /usr/bin/flux
     
-RUN adduser -D alpine && mkdir -p /data/patches /data/configs /host && chown -R alpine:alpine /data /host
+RUN adduser -D alpine && mkdir -p /data/patches /data/configs /.talos /.kube && chown -R alpine:alpine /data /.talos /.kube
     
 COPY ./src /src
 
 WORKDIR /src
 
-RUN chmod +x /src/scripts/*
+RUN chmod +x -R /src/scripts/
 
 USER alpine
 

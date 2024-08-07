@@ -1,6 +1,3 @@
-# An example configuration file for Talos-Manager
-# Remember, this is just an Ansible inventory file
-# You can even use jinja2 templating in this file
 controlplane:
   hosts:
     192.168.1.100:
@@ -16,17 +13,18 @@ worker:
         machine:
           network:
             hostname: b
-    # All nodes in range from 192.168.1.10 to 192.168.1.20
+
+    # All nodes from 192.168.1.10 to 192.168.1.20
     # 192.168.1.[10:20]:
 
 cluster:
   vars:
     # Make sure you change the cluster name to something unique
-    # WARNING! This will overwrite the existing context with this name in your talosconfig and kubeconfig
+    # Warning! This will overwrite any context with this name in your talosconfig and kubeconfig
     cluster_name: example
 
     # IP or FQDN that will be used to reach the kubernetes API
-    # This example sets the cluster endpoint to the ip of the first controlplane node
+    # This example uses the address of the first controlplane
     cluster_endpoint: https://{{ groups['controlplane'][0] }}:6443
 
     # Add additional SANs to the TLS certificate
@@ -35,23 +33,15 @@ cluster:
     #   - kubernetes.example.com
 
     # Set the Talos/Kubernetes version to install
-    # NOTE: Even if these variables are optional, it is highly recommened to set a version.
-    # If you don't set a version, Talos-Manager will automatically upgrade your cluster to the newest version.
-    # Patches override these values if their respective fields are set
-    # Upgrades are automatic, if an image/version change is detected
-
+    # Note: If a version isn't set, Talos-Manager will automatically upgrade your cluster to the latest tested version.
+    # Upgrades are rolling and automatic, if an image/version change is detected.
+    # Patches override these values if their respective fields are set.
     talos_image: ghcr.io/siderolabs/installer # (Optional)
-    talos_version: v1.7.5 # (Optional, but recommended)
-    k8s_version: 1.30.1 # (Optional, but recommended)
+    talos_version: v1.7.5 # Optional, but recommended
+    k8s_version: 1.30.1 # Optional, but recommended
 
-    # Gzipped,Base64 encoded secrets file
-    # You can generate this variable by running:
-    # docker run ghcr.io/chickeniq/talos-manager gen-secrets
-    secrets: ""
-
-    # Add additional patches to the selected category (Optional)
-    # You can also define per machine patches by adding vars.patch to the node as demonstrated above
-    patches: # (global | controlplane | worker) (Optional)
+    # Add additional patches to the selected node types (Optional)
+    patches:
       global:
         machine:
           features:
@@ -62,15 +52,16 @@ cluster:
         cluster:
           allowSchedulingOnControlPlanes: true
 
-      # worker: {}
+      worker: {}
 
+    # Gzipped, Base64 encoded secrets file
+    secrets: ""
+
+    # Addons are an optional part of Talos-Manager, they are applied post install, helping you extend k8s from the get-go.
     addons:
       cilium:
-        enabled: false
-        # Cilium version to install
+        enabled: false # If enabled, flannel will be disabled and will be replaced with cilium
         version: 1.16.0 # Optional, but recommended
-
-        # Namespace to install cilium to
         namespace: kube-system # Optional
 
         # Enable the default network policy
@@ -78,10 +69,10 @@ cluster:
         # kube-system and the specified cilium namespace are considered privileged namespaces,
         # all pods in these namespaces have no restrictions.
         # Pods running in the host network are also considered privileged, and have no restrictions.
+        # Warning! If enabled, all controlplanes will reboot automatically on first apply (rolling).
         use_default_policy: false # Optional
 
-        # Add additional values to the cilium helm chart
-        helm_values: # Optional
+        helm_values: # Add additional values to the cilium helm chart (Optional)
           # A simple load balancer similar to k3s's ServiceLB
           # To use this feature, you must set the loadBalancerClass to "io.cilium/node"
           nodeIPAM:

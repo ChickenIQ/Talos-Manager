@@ -1,7 +1,7 @@
 #!/bin/sh
 
 docker run -it --rm \
-    -v ~/.talos:/host/.talos \
-    -v ~/.kube:/host/.kube \
-    -v ./config.yaml:/host/config.yaml \
+    -v ~/.kube:/.kube \
+    -v ~/.talos:/.talos \
+    -v ./config.yaml:/config.yaml \
     ghcr.io/chickeniq/talos-manager:latest $1
