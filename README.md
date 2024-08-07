@@ -80,7 +80,7 @@ docker run -it --rm `
 
 Talos-Manager supports encryption and decryption of the config file using ansible-vault.
 
-It is highly recommended to encrypt your config file as it contains credentials that can be used to gain full access your cluster.
+It is highly recommended to encrypt your config file as it contains credentials that can be used to gain full access to your cluster.
 
 #### Encryption:
 
