@@ -112,11 +112,11 @@ The config file is nothing but an Ansible inventory file and can be configured l
 | ---------------- | ------------------------- | -------- | ---------------------------- |
 | cluster_name     | The name of the cluster   | Yes      | -                            |
 | cluster_endpoint | Kubernetes endpoint       | Yes      | -                            |
-| secrets          | Cluster secrets           | Yes      | -                            |
 | tls_sans         | Additional TLS SANs       | No       | The IPs of all controlplanes |
 | talos_image      | Talos image to use        | No       | ghcr.io/siderolabs/installer |
 | talos_version    | Talos version to use      | No       | Latest tested version        |
 | k8s_version      | Kubernetes version to use | No       | Latest tested version        |
+| secrets          | Cluster secrets           | Yes      | -                            |
 | patches          | Patches to apply          | No       | -                            |
 | addons           | Addons to install         | No       | -                            |
 
@@ -202,24 +202,6 @@ cluster:
 
 </details>
 
-## Upgrades
-
-Upgrades are automatic and work similar to how you would upgrade your cluster using talosctl.
-
-As soon as a version/image change is detected, Talos-Manager will automatically upgrade k8s then talos, one node at a time, making sure the upgrade was succesful before moving to the next node.
-
-### Differences from talosctl
-
-- Talos upgrades can use different images
-
-  - This allows you declare the images for every node, improving hardware compatibility.
-  - talosctl is also able to provide this functionality, but it is necessary to run the upgrade command with the specific image flag for each node.
-
-- All kubernetes components are upgraded at once
-
-  - The workloads running on the node and etcd are left intact.
-  - This results in quite a noticeable speed increase, but at the cost of the node becoming unschedulable for a short period of time.
-
 ## Addons
 
 Talos-Manager allows you to extend the functionality of your cluster by installing certain helm charts, which we will call addons.
@@ -231,7 +213,7 @@ The following addons are currently supported:
 
 Create an issue if you would like to see more addons added to the project.
 
-## [Cilium](https://cilium.io/)
+### [Cilium](https://cilium.io/)
 
 Cilium replaces flannel as the CNI provider and provides a lot of additional features.
 
@@ -262,9 +244,9 @@ The kube-system and the specified cilium namespace are considered privileged nam
 Pods running in the host network are also considered privileged. They also have unrestricted access to the cluster.
 
 <details>
-  <summary>Example rendered policy</summary>
+  <summary>Rendered policy preview</summary>
 
-### Allow every pod to access the kube-dns
+#### Allow every pod to access the kube-dns
 
 **Path:** /var/lib/Talos-Manager/cilium/kube-dns.yaml
 
@@ -374,7 +356,7 @@ spec:
 
 </details>
 
-## [FluxCD](https://fluxcd.io/)
+### [FluxCD](https://fluxcd.io/)
 
 FluxCD is a tool that allows you to automatically deploy your workloads using gitops.
 
@@ -392,3 +374,21 @@ This addon is deployed using the flux cli and currently only supports GitHub rep
 | path       | Path for the FluxCD configuration        | No       | /clusters/main |
 | token      | GitHub token                             | Yes      | -              |
 | sops       | Gzipped, Base64 encoded SOPS private key | No       | -              |
+
+## Upgrades
+
+Upgrades are automatic and work similar to how you would upgrade your cluster using talosctl.
+
+As soon as a version/image change is detected, Talos-Manager will automatically upgrade k8s then talos, one node at a time, making sure the upgrade was succesful before moving to the next node.
+
+### Differences from talosctl
+
+- Talos upgrades can use different images
+
+  - This allows you declare the images for every node, improving hardware compatibility.
+  - talosctl is also able to provide this functionality, but it is necessary to run the upgrade command with the specific image flag for each node.
+
+- All kubernetes components are upgraded at once
+
+  - The workloads running on the node and etcd are left intact.
+  - This results in quite a noticeable speed increase, but at the cost of the node becoming unschedulable for a short period of time.
