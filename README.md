@@ -375,7 +375,7 @@ spec:
 
 </details>
 
-## FluxCD
+## [FluxCD](https://fluxcd.io/)
 
 FluxCD is a tool that allows you to automatically deploy your workloads using gitops.
 
