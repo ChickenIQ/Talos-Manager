@@ -14,7 +14,7 @@ worker:
           network:
             hostname: b
 
-    # All nodes from 192.168.1.10 to 192.168.1.20
+    # All nodes IPs from 192.168.1.10 to 192.168.1.20
     # 192.168.1.[10:20]:
 
 cluster:

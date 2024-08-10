@@ -168,7 +168,7 @@ worker:
 ```yaml
 worker:
   hosts:
-    # Use nodes Ips from 192.168.1.10 to 192.168.1.20
+    # Use nodes IPs from 192.168.1.10 to 192.168.1.20
     192.168.1.[10:20]:
 ```
 
