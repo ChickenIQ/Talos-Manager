@@ -74,7 +74,7 @@ machine:
         apiVersion: cilium.io/v2
         kind: CiliumClusterwideNetworkPolicy
         metadata:
-          name: default
+          name: global
         spec:
           endpointSelector:
             matchExpressions:
@@ -103,7 +103,7 @@ machine:
                   rules:
                     dns:
                       - matchPattern: "*"
-      path: /var/lib/Talos-Manager/cilium/default.yaml
+      path: /var/lib/Talos-Manager/cilium/global.yaml
       permissions: 0o444
       op: create
 {% endif %}

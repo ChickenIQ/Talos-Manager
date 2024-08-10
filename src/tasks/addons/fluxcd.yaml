@@ -34,7 +34,7 @@
   ansible.builtin.command: >
     flux bootstrap github --personal
       --owner={{ addons.fluxcd.username }} --repository={{ addons.fluxcd.repository }}
-      --branch={{ addons.fluxcd.branch }} --path={{ addons.fluxcd.path }}
-  when: _fluxcd_namespace.changed or _sops_secret.changed or addons.fluxcd.update | default(false)
+      --branch={{ addons.fluxcd.branch | default('main') }} --path={{ addons.fluxcd.path | default('clusters/main') }}
+  when: _fluxcd_namespace.changed or addons.fluxcd.update | default(false)
   register: _output
   until: _output.rc == 0

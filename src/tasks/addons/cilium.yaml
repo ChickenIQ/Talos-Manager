@@ -35,7 +35,7 @@
       --set k8sServicePort=7445
       --version "{{ addons.cilium.version | default('') }}"
       --namespace {{ addons.cilium.namespace | default('kube-system') }}
-      {% if addons.cilium.use_default_policy | default(false) %}
+      {% if addons.cilium.enable_default_policy | default(false) %}
       --set extraArgs[0]=--static-cnp-path=/policies
       --set extraHostPathMounts[0].name=default
       --set extraHostPathMounts[0].mountPath=/policies/default.yaml

@@ -70,7 +70,7 @@ cluster:
         # all pods in these namespaces have no restrictions.
         # Pods running in the host network are also considered privileged, and have no restrictions.
         # Warning! If enabled, all controlplanes will reboot automatically on first apply (rolling).
-        use_default_policy: false # Optional
+        enable_default_policy: false # Optional
 
         helm_values: # Add additional values to the cilium helm chart (Optional)
           # A simple load balancer similar to k3s's ServiceLB
@@ -86,6 +86,6 @@ cluster:
         branch: main
         username: user
         repository: example
-        path: clusters/example # Path to the FluxCD configuration.
+        path: clusters/example # Path for the FluxCD configuration.
         token: "" # GitHub PAT (Required permissions: Administration: RW, Contents: RW, Metadata: RO)
-        sops: "" # Base64 encoded SOPS private key (Optional)
+        sops: "" # Gzipped, Base64 encoded SOPS private key (Optional)
