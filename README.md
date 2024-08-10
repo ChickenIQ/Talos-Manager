@@ -247,10 +247,9 @@ This addon is deployed using the helm values provided in the official Talos docs
 | enable_default_policy | Use the networkpolicy provided by Talos-Manager | No       | false                 |
 | helm_values           | Additional helm values                          | No       | -                     |
 
-### The default networkpolicy
+### The networkpolicy provided by Talos-Manager (Disabled by default)
 
-**Note:**
-When this is enabled for the first time, an automatic reboot will be triggered. All controlplanes will be rebooted one at a time.
+**Note:** When this is enabled for the first time or updates, an automatic reboot will be triggered. All controlplanes will be rebooted one at a time.
 
 This policy is split into multiple files and is not visible via the crds. It is loaded from the filesystem under `/var/lib/Talos-Manager/cilium/`.
 
