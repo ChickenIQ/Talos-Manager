@@ -1,6 +1,6 @@
 # Talos Manager (Work In Progress)
 
-A simple, yet powerful, tool to create and manage your Kubernetes clusters using [Talos Linux](https://talos.dev/).
+A simple, yet powerful tool to create and manage your Kubernetes clusters using [Talos Linux](https://talos.dev/).
 
 Please note that this project is still in development and is not yet ready for production use. There **WILL** be breaking changes.
 
