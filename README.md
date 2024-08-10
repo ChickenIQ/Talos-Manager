@@ -138,10 +138,7 @@ You can use the **_[official docs](https://www.talos.dev/latest/reference/config
 
 `Global`, `controlplane` and `worker` patches are baked into the generated config, with the most specific patch type taking precedence, while machinepatches (per node) are applied on top of the generated config and override any other patches.
 
-<details>
-  <summary>Per node patches</summary>
-
-### Simple
+**Per node patches:**
 
 ```yaml
 controlplane:
@@ -161,21 +158,12 @@ worker:
         machine:
           network:
             hostname: b
-```
 
-### Using ip ranges
-
-```yaml
-worker:
-  hosts:
     # Use nodes IPs from 192.168.1.10 to 192.168.1.20
-    192.168.1.[10:20]:
+    # 192.168.1.[10:20]:
 ```
 
-</details>
-
-<details>
-  <summary>Per group patches</summary>
+**Per group patches:**
 
 ```yaml
 cluster:
@@ -199,8 +187,6 @@ cluster:
           install:
             disk: /dev/nvme0n1
 ```
-
-</details>
 
 ## Addons
 
