@@ -1,4 +1,6 @@
-# Talos Manager (Work In Progress)
+<p align="center">
+  <h1 align="center">Talos Manager (Work In Progress)</h1>
+</p>
 
 A simple, yet powerful tool to create and manage your Kubernetes clusters using [Talos Linux](https://talos.dev/).
 
@@ -24,7 +26,7 @@ This project is designed to be used with bare metal clusters, but it can be used
 
 - Highly customizable
 
-- Cilium CNI integration
+- Cilium integration
 
 - FluxCD integration
 
