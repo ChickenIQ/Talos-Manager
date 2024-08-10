@@ -1,6 +1,4 @@
-<p align="center">
-  <h1 align="center">Talos Manager (Work In Progress)</h1>
-</p>
+<h1 align="center">Talos Manager (Work In Progress)</h1>
 
 A simple, yet powerful tool to create and manage your Kubernetes clusters using [Talos Linux](https://talos.dev/).
 
