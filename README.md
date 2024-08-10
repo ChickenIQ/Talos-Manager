@@ -229,7 +229,7 @@ This addon is deployed using the helm values provided in the official Talos docs
 | enable_default_policy | Use the networkpolicy provided by Talos-Manager | No       | false                 |
 | helm_values           | Additional helm values                          | No       | -                     |
 
-### The networkpolicy provided by Talos-Manager (Disabled by default)
+**Information about the networkpolicy provided by Talos-Manager (Disabled by default)**
 
 **Note:** When this is enabled for the first time or updates, an automatic reboot will be triggered. All controlplanes will be rebooted one at a time.
 
@@ -362,7 +362,7 @@ FluxCD is a tool that allows you to automatically deploy your workloads using gi
 
 This addon is deployed using the flux cli and currently only supports GitHub repositories.
 
-### FluxCD configuration
+**FluxCD configuration**
 
 | Name       | Description                              | Required | Default value  |
 | ---------- | ---------------------------------------- | -------- | -------------- |
